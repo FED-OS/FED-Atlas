@@ -1,0 +1,67 @@
+# =============================================================
+# Uncensored Translator — .gitignore
+# =============================================================
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.pnpm-store/
+
+# ---- Editor / IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- OS junk ----
+*.tmp
+*.bak
+*.log
+*.cache
+
+# ---- Build artifacts ----
+# index.html IS committed (it is the shippable artifact), so do NOT ignore it.
+# Only ignore intermediate/scratch build outputs:
+dist/
+build_tmp/
+*.min.html
+
+# ---- Test / coverage ----
+coverage/
+.nyc_output/
+
+# ---- Local dev servers / runtime data ----
+*.pid
+.http.server.*
+
+# ---- Browser automation scratch (do not commit these) ----
+.browser_data/
+.screenshots/
+.last_screenshot
+.last_elements.json
+.step_counter
+
+# ---- Agent / workspace scratch ----
+.agent_hooks/
+.psiphon_data/
+summarized_conversations/
+todo*.md
+outputs/
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Notes ----
+# IMPORTANT: index.html is the assembled, shippable file and MUST be committed.
+# The build (node build.js) is deterministic, but we commit the output so the
+# repo is usable without Node. Do not add `index.html` to this ignore list.
