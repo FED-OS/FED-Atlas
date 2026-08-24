@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uncensored Translator</title>
+    <style>
+        /* same clean dark styles as before */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #111; color: #eee; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; width: 100%; }
+        h1 { font-weight: 300; letter-spacing: 1px; text-align: center; margin-bottom: 20px; }
+        .row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .row select { flex: 1; background: #222; color: #eee; border: 1px solid #444; padding: 10px; border-radius: 6px; font-size: 1rem; }
+        .row button { background: #333; border: 1px solid #555; color: #eee; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; }
+        .row button:hover { background: #444; }
+        textarea { width: 100%; background: #1a1a1a; border: 1px solid #333; color: #eee; padding: 16px; border-radius: 6px; font-size: 1.1rem; font-family: inherit; resize: vertical; min-height: 120px; }
+        textarea:focus { outline: none; border-color: #666; }
+        textarea[readonly] { background: #0f0f0f; color: #aaa; }
+        .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+        .actions button { background: #2a2a2a; border: 1px solid #555; color: #eee; padding: 10px 28px; border-radius: 6px; cursor: pointer; }
+        .actions button:hover { background: #3a3a3a; }
+        .status { font-size: 0.85rem; color: #888; }
+        .footer { margin-top: 24px; text-align: center; font-size: 0.75rem; color: #444; border-top: 1px solid #222; padding-top: 16px; }
+        .loaded { color: #4caf50; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⟡ uncensored translator</h1>
+    <div class="row">
+        <select id="sourceLang"><option value="en">English</option><option value="es">Spanish</option></select>
+        <button id="swapBtn">⇄</button>
+        <select id="targetLang"><option value="es">Spanish</option><option value="en">English</option></select>
+    </div>
+    <textarea id="sourceText" placeholder="Type or paste text…"></textarea>
+    <textarea id="targetText" readonly placeholder="Translation…"></textarea>
+    <div class="actions">
+        <span class="status" id="status">⏳ Loading dictionary…</span>
+        <button id="translateBtn">⏎ Translate</button>
+    </div>
+    <div class="footer">offline · 50k+ words · no API · uncensored</div>
+</div>
+
+<script>
+// ---------- GLOBAL DICTIONARY ----------
+let DICT = null;  // will be { en: {word:spanish}, es: {spanish:word} }
+
+// ---------- LOAD FROM PLAIN .txt FILE ----------
+async function loadDictionary() {
+    const status = document.getElementById('status');
+    try {
+        // Change this filename to use your actual file
+        const response = await fetch('es_merged_50k.txt');
+        if (!response.ok) throw new Error('File not found');
+        const text = await response.text();
+        const lines = text.split('\n');
+        const en = {};
+        const es = {};
+        let count = 0;
+        for (const line of lines) {
+            const parts = line.split('\t');
+            if (parts.length === 2) {
+                const eng = parts[0].trim().toLowerCase();
+                const spa = parts[1].trim().toLowerCase();
+                if (eng && spa) {
+                    en[eng] = spa;
+                    es[spa] = eng;
+                    count++;
+                }
+            }
+        }
+        DICT = { en, es };
+        status.textContent = `✅ Loaded ${count} translations`;
+        status.className = 'status loaded';
+        performTranslation();
+    } catch (err) {
+        status.textContent = '❌ ' + err.message;
+        status.className = 'status error';
+        console.error(err);
+    }
+}
+
+// ---------- TRANSLATION ----------
+function translateWord(word, source, target) {
+    if (!DICT) return word;
+    if (source === target) return word;
+    const key = word.toLowerCase();
+    if (source === 'en' && target === 'es') {
+        return DICT.en[key] || word;
+    }
+    if (source === 'es' && target === 'en') {
+        return DICT.es[key] || word;
+    }
+    return word;
+}
+
+function translate(text, source, target) {
+    if (!text.trim()) return '';
+    const words = text.split(/\s+/).filter(w => w.length > 0);
+    return words.map(w => {
+        // Preserve punctuation
+        const clean = w.replace(/^[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+/, '').replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+$/, '');
+        const prefix = w.slice(0, w.indexOf(clean));
+        const suffix = w.slice(prefix.length + clean.length);
+        if (!clean) return w;
+        const trans = translateWord(clean, source, target);
+        // Restore case
+        if (clean[0] === clean[0].toUpperCase()) {
+            return prefix + trans.charAt(0).toUpperCase() + trans.slice(1) + suffix;
+        }
+        return prefix + trans + suffix;
+    }).join(' ');
+}
+
+// ---------- UI ----------
+const sourceLang = document.getElementById('sourceLang');
+const targetLang = document.getElementById('targetLang');
+const sourceText = document.getElementById('sourceText');
+const targetText = document.getElementById('targetText');
+const translateBtn = document.getElementById('translateBtn');
+const swapBtn = document.getElementById('swapBtn');
+
+let timeoutId;
+
+function performTranslation() {
+    if (!DICT) {
+        targetText.value = 'Loading dictionary…';
+        return;
+    }
+    const src = sourceLang.value;
+    const tgt = targetLang.value;
+    const result = translate(sourceText.value, src, tgt);
+    targetText.value = result;
+}
+
+sourceText.addEventListener('input', () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(performTranslation, 300);
+});
+
+translateBtn.addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    performTranslation();
+});
+
+swapBtn.addEventListener('click', () => {
+    const src = sourceLang.value;
+    const tgt = targetLang.value;
+    sourceLang.value = tgt;
+    targetLang.value = src;
+    performTranslation();
+});
+
+sourceLang.addEventListener('change', performTranslation);
+targetLang.addEventListener('change', performTranslation);
+
+// ---------- START ----------
+loadDictionary();
+</script>
+</body>
+</html>
