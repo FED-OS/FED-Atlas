@@ -5,313 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Offline Translator</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #111;
-            color: #eee;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 750px;
-            width: 100%;
-        }
-        h1 {
-            font-weight: 300;
-            letter-spacing: 1px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-        .sub {
-            text-align: center;
-            color: #555;
-            font-size: 0.8rem;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #1f1f1f;
-            padding-bottom: 12px;
-        }
-        .row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .row select {
-            flex: 1;
-            background: #222;
-            color: #eee;
-            border: 1px solid #444;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .row select:focus {
-            outline: none;
-            border-color: #777;
-        }
-        .row button {
-            background: #333;
-            border: 1px solid #555;
-            color: #eee;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.3rem;
-            line-height: 1;
-            transition: 0.2s;
-        }
-        .row button:hover {
-            background: #444;
-            border-color: #888;
-        }
-        textarea {
-            width: 100%;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #eee;
-            padding: 16px;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 130px;
-            line-height: 1.5;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: #666;
-        }
-        textarea[readonly] {
-            background: #0f0f0f;
-            color: #aaa;
-        }
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 14px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .actions button {
-            background: #2a2a2a;
-            border: 1px solid #555;
-            color: #eee;
-            padding: 10px 32px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-        .actions button:hover {
-            background: #3a3a3a;
-            border-color: #888;
-        }
-        .status {
-            font-size: 0.85rem;
-            color: #888;
-        }
-        .status.loaded {
-            color: #4caf50;
-        }
-        .status.error {
-            color: #f44336;
-        }
-        .footer {
-            margin-top: 24px;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #444;
-            border-top: 1px solid #1a1a1a;
-            padding-top: 16px;
-        }
-        .footer span {
-            color: #666;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #111; color: #eee; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { max-width: 750px; width: 100%; }
+        h1 { font-weight: 300; text-align: center; margin-bottom: 6px; }
+        .sub { text-align: center; color: #555; font-size: 0.8rem; margin-bottom: 20px; border-bottom: 1px solid #1f1f1f; padding-bottom: 12px; }
+        .row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .row select { flex: 1; background: #222; color: #eee; border: 1px solid #444; padding: 10px; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+        .row select:focus { outline: none; border-color: #777; }
+        .row button { background: #333; border: 1px solid #555; color: #eee; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1.3rem; line-height: 1; transition: 0.2s; }
+        .row button:hover { background: #444; border-color: #888; }
+        textarea { width: 100%; background: #1a1a1a; border: 1px solid #333; color: #eee; padding: 16px; border-radius: 6px; font-size: 1.1rem; font-family: inherit; resize: vertical; min-height: 130px; line-height: 1.5; }
+        textarea:focus { outline: none; border-color: #666; }
+        textarea[readonly] { background: #0f0f0f; color: #aaa; }
+        .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
+        .actions button { background: #2a2a2a; border: 1px solid #555; color: #eee; padding: 10px 32px; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .actions button:hover { background: #3a3a3a; border-color: #888; }
+        .status { font-size: 0.85rem; color: #888; white-space: pre-wrap; }
+        .status.loaded { color: #4caf50; }
+        .status.error { color: #f44336; }
+        .footer { margin-top: 24px; text-align: center; font-size: 0.7rem; color: #444; border-top: 1px solid #1a1a1a; padding-top: 16px; }
+        .footer span { color: #666; }
+        .debug { font-size: 0.7rem; color: #555; margin-top: 4px; border-top: 1px solid #222; padding-top: 4px; }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>⟡ uncensored translator</h1>
+    <div class="sub">offline · English ↔ Spanish</div>
 
-    <div class="container">
-        <h1>⟡ uncensored translator</h1>
-        <div class="sub">offline · English ↔ Spanish</div>
-
-        <div class="row">
-            <select id="sourceLang">
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-            </select>
-            <button id="swapBtn" title="Swap languages">⇄</button>
-            <select id="targetLang">
-                <option value="es">Spanish</option>
-                <option value="en">English</option>
-            </select>
-        </div>
-
-        <textarea id="sourceText" placeholder="Type or paste text to translate…"></textarea>
-        <textarea id="targetText" readonly placeholder="Translation will appear here…"></textarea>
-
-        <div class="actions">
-            <span class="status" id="status">⏳ Loading dictionary…</span>
-            <button id="translateBtn">⏎ Translate</button>
-        </div>
-        <div class="footer"><span>uses es_merged_50k.txt · 50k+ words · no API · no backend</span></div>
+    <div class="row">
+        <select id="sourceLang"><option value="en">English</option><option value="es">Spanish</option></select>
+        <button id="swapBtn">⇄</button>
+        <select id="targetLang"><option value="es">Spanish</option><option value="en">English</option></select>
     </div>
 
-    <script>
-        // ============================================================
-        //  1. GLOBAL DICTIONARY STORE
-        // ============================================================
-        let DICT = null; // will be { en: {word:spanish}, es: {spanish:word} }
+    <textarea id="sourceText" placeholder="Type or paste text…"></textarea>
+    <textarea id="targetText" readonly placeholder="Translation…"></textarea>
 
-        // ============================================================
-        //  2. LOAD THE DICTIONARY FROM THE .txt FILE
-        //     (Must be in the same folder as this HTML)
-        // ============================================================
-        async function loadDictionary() {
-            const status = document.getElementById('status');
-            try {
-                status.textContent = '⏳ Loading es_merged_50k.txt…';
-                // Change this line if your file has a different name
-                const response = await fetch('es_merged_50k.txt');
-                if (!response.ok) throw new Error('File not found. Make sure es_merged_50k.txt is in the same folder.');
+    <div class="actions">
+        <span class="status" id="status">⏳ Loading dictionary…</span>
+        <button id="translateBtn">⏎ Translate</button>
+    </div>
+    <div class="debug" id="debugInfo"></div>
+    <div class="footer"><span>uses es-en.data · no API · no backend</span></div>
+</div>
 
-                const text = await response.text();
-                const lines = text.split('\n');
-                const en = {};
-                const es = {};
-                let count = 0;
+<script>
+// ============================================================
+//  1. DICTIONARY LOADER with debug
+// ============================================================
+let DICT = null;
 
-                for (const line of lines) {
-                    const parts = line.split('\t'); // tab-separated
-                    if (parts.length === 2) {
-                        const first = parts[0].trim().toLowerCase();
-                        const second = parts[1].trim().toLowerCase();
-                        if (first && second) {
-                            // HEURISTIC: check if the first column looks like English
-                            // (mostly a-z, no Spanish special chars like ñ, á, é, í, ó, ú, ü)
-                            const hasSpanishChars = /[ñáéíóúü]/i.test(first);
-                            if (!hasSpanishChars) {
-                                // First column is English, second is Spanish
-                                en[first] = second;
-                                es[second] = first;
-                            } else {
-                                // First column is Spanish, second is English
-                                es[first] = second;
-                                en[second] = first;
-                            }
-                            count++;
-                        }
+async function loadDictionary() {
+    const status = document.getElementById('status');
+    const debug = document.getElementById('debugInfo');
+    try {
+        status.textContent = '⏳ Loading es-en.data…';
+        // CHANGE THIS LINE to your dictionary file name:
+        const response = await fetch('es-en.data');
+        if (!response.ok) throw new Error('File not found. Make sure es-en.data is in the same folder.');
+
+        const text = await response.text();
+        const lines = text.split('\n');
+        const en = {};
+        const es = {};
+        let count = 0;
+        let sample = [];
+
+        for (const line of lines) {
+            const parts = line.split('\t');
+            if (parts.length === 2) {
+                const first = parts[0].trim().toLowerCase();
+                const second = parts[1].trim().toLowerCase();
+                if (first && second) {
+                    // Heuristic: if first column contains Spanish chars, it's Spanish->English
+                    const hasSpanish = /[ñáéíóúü]/i.test(first);
+                    if (!hasSpanish) {
+                        en[first] = second;
+                        es[second] = first;
+                    } else {
+                        es[first] = second;
+                        en[second] = first;
                     }
+                    count++;
+                    if (count <= 3) sample.push(`${first} → ${second}`);
                 }
-
-                DICT = { en, es };
-                status.textContent = `✅ Loaded ${count} translations`;
-                status.className = 'status loaded';
-                performTranslation(); // auto-translate if there's text
-            } catch (err) {
-                status.textContent = '❌ ' + err.message;
-                status.className = 'status error';
-                console.error(err);
             }
         }
 
-        // ============================================================
-        //  3. TRANSLATION ENGINE
-        // ============================================================
-        function translateWord(word, source, target) {
-            if (!DICT) return word;
-            if (source === target) return word;
-            const key = word.toLowerCase();
-            if (source === 'en' && target === 'es') {
-                return DICT.en[key] || word;
-            }
-            if (source === 'es' && target === 'en') {
-                return DICT.es[key] || word;
-            }
-            return word;
+        DICT = { en, es };
+        status.textContent = `✅ Loaded ${count} translations`;
+        status.className = 'status loaded';
+        debug.textContent = `Sample: ${sample.join(' | ')}`;
+        performTranslation();
+    } catch (err) {
+        status.textContent = '❌ ' + err.message;
+        status.className = 'status error';
+        debug.textContent = 'Make sure the dictionary file exists and is named correctly.';
+        console.error(err);
+    }
+}
+
+// ============================================================
+//  2. TRANSLATION
+// ============================================================
+function translateWord(word, source, target) {
+    if (!DICT) return word;
+    if (source === target) return word;
+    const key = word.toLowerCase();
+    if (source === 'en' && target === 'es') return DICT.en[key] || word;
+    if (source === 'es' && target === 'en') return DICT.es[key] || word;
+    return word;
+}
+
+function translate(text, source, target) {
+    if (!text.trim()) return '';
+    if (!DICT) return 'Loading dictionary…';
+    const words = text.split(/\s+/).filter(w => w.length > 0);
+    return words.map(w => {
+        const clean = w.replace(/^[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+/, '').replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+$/, '');
+        const prefix = w.slice(0, w.indexOf(clean));
+        const suffix = w.slice(prefix.length + clean.length);
+        if (!clean) return w;
+        const trans = translateWord(clean, source, target);
+        if (clean[0] === clean[0].toUpperCase()) {
+            return prefix + trans.charAt(0).toUpperCase() + trans.slice(1) + suffix;
         }
+        return prefix + trans + suffix;
+    }).join(' ');
+}
 
-        function translate(text, source, target) {
-            if (!text.trim()) return '';
-            if (!DICT) return 'Loading dictionary…';
+// ============================================================
+//  3. UI
+// ============================================================
+const sourceLang = document.getElementById('sourceLang');
+const targetLang = document.getElementById('targetLang');
+const sourceText = document.getElementById('sourceText');
+const targetText = document.getElementById('targetText');
+const translateBtn = document.getElementById('translateBtn');
+const swapBtn = document.getElementById('swapBtn');
 
-            const words = text.split(/\s+/).filter(w => w.length > 0);
-            return words.map(w => {
-                // Separate punctuation from the actual word
-                const clean = w.replace(/^[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+/, '').replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+$/, '');
-                const prefix = w.slice(0, w.indexOf(clean));
-                const suffix = w.slice(prefix.length + clean.length);
-                if (!clean) return w;
+let timeoutId;
 
-                const trans = translateWord(clean, source, target);
+function performTranslation() {
+    const src = sourceLang.value;
+    const tgt = targetLang.value;
+    targetText.value = translate(sourceText.value, src, tgt);
+}
 
-                // Preserve capitalization
-                if (clean[0] === clean[0].toUpperCase()) {
-                    return prefix + trans.charAt(0).toUpperCase() + trans.slice(1) + suffix;
-                }
-                return prefix + trans + suffix;
-            }).join(' ');
-        }
+sourceText.addEventListener('input', () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(performTranslation, 300);
+});
+translateBtn.addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    performTranslation();
+});
+swapBtn.addEventListener('click', () => {
+    const src = sourceLang.value;
+    const tgt = targetLang.value;
+    sourceLang.value = tgt;
+    targetLang.value = src;
+    performTranslation();
+});
+sourceLang.addEventListener('change', performTranslation);
+targetLang.addEventListener('change', performTranslation);
 
-        // ============================================================
-        //  4. UI LOGIC
-        // ============================================================
-        const sourceLang = document.getElementById('sourceLang');
-        const targetLang = document.getElementById('targetLang');
-        const sourceText = document.getElementById('sourceText');
-        const targetText = document.getElementById('targetText');
-        const translateBtn = document.getElementById('translateBtn');
-        const swapBtn = document.getElementById('swapBtn');
-        const status = document.getElementById('status');
-
-        let timeoutId = null;
-
-        function performTranslation() {
-            const src = sourceLang.value;
-            const tgt = targetLang.value;
-            const text = sourceText.value;
-            const result = translate(text, src, tgt);
-            targetText.value = result;
-        }
-
-        // Auto-translate on input with 300ms debounce
-        sourceText.addEventListener('input', function() {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(performTranslation, 300);
-        });
-
-        translateBtn.addEventListener('click', function() {
-            clearTimeout(timeoutId);
-            performTranslation();
-        });
-
-        swapBtn.addEventListener('click', function() {
-            const src = sourceLang.value;
-            const tgt = targetLang.value;
-            sourceLang.value = tgt;
-            targetLang.value = src;
-            performTranslation();
-        });
-
-        sourceLang.addEventListener('change', performTranslation);
-        targetLang.addEventListener('change', performTranslation);
-
-        // ============================================================
-        //  5. BOOT
-        // ============================================================
-        loadDictionary();
-    </script>
-
+loadDictionary();
+</script>
 </body>
 </html>
