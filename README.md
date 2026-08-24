@@ -1,5 +1,7 @@
 # Uncensored Translator
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W3T61ZU5FS)
+
 > A self-contained, offline, **uncensored** translator for the top 10 languages
 > by total speakers. No servers. No APIs. No network calls. No dependencies.
 > The entire engine — dictionaries and all — runs in your browser.
