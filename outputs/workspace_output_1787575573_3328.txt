@@ -1,0 +1,5 @@
+OUTPUT fuck you 8 / 2000 CHARS AUTO-TX CLEAR ▶
+=== set tgt to russian ===
+OUTPUT пошёл на хуй 8 / 2000 CHARS AUTO-TX CLE
+=== type a phrase ===
+OUTPUT доброе утро 12 / 2000 CHARS AUTO-TX CLE

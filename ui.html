@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNCENSORED TRANSLATOR // RAW SIGNAL</title>
+<style>
+/* CSS injected here in the final assembled file */
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Uncensored Translator</h1>
+    <span class="ver">v1.0 // off-grid</span>
+  </div>
+  <div class="status">
+    <span class="live">SIGNAL LIVE</span>
+    <span>ENGINE <b>LOCAL</b></span>
+    <span>NET <b>OFF</b></span>
+    <span class="bars" id="bars"><i></i><i></i><i></i><i></i></span>
+  </div>
+</header>
+
+<main>
+  <!-- source / target selectors + swap -->
+  <div class="controls">
+    <div class="lang-pick src">
+      <label>Source // origin</label>
+      <select id="srcLang"></select>
+    </div>
+    <button class="swap" id="swapBtn" title="Swap source / target" aria-label="Swap languages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M7 4 L3 8 L7 12 M3 8 H21 M17 12 L21 16 L17 20 M21 16 H3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="lang-pick">
+      <label>Target // destination</label>
+      <select id="tgtLang"></select>
+    </div>
+  </div>
+
+  <!-- panes with the wire down the seam -->
+  <div class="grid">
+    <div class="pane src">
+      <div class="pane-head">
+        <span class="tag">TX // <b id="srcTag">english</b></span>
+        <span class="meter">INPUT</span>
+      </div>
+      <textarea id="srcText" maxlength="2000" placeholder="type anything. nothing filtered. nothing sent.//"></textarea>
+    </div>
+
+    <div class="wire" id="wire"><span class="pulse"></span></div>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span class="tag">RX // <b id="tgtTag">spanish</b></span>
+        <span class="meter">OUTPUT</span>
+      </div>
+      <div class="out empty" id="outText"><span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- action bar -->
+  <div class="actions">
+    <div class="left">
+      <span class="count" id="count"><b>0</b> / 2000 chars</span>
+      <label class="toggle" title="Translate automatically as you type">
+        <input type="checkbox" id="autoToggle" checked>
+        <span class="sw"></span>
+        AUTO-TX
+      </label>
+    </div>
+    <div class="right">
+      <button class="btn ghost" id="clearBtn">Clear</button>
+      <button class="btn" id="txBtn">▶ Transmit</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="line"><b>HOW IT WORKS //</b> a self-contained dictionary engine runs entirely in your browser. no servers, no apis, no network calls. translation pivots through english (X → EN → Y) to cover all 90 language pairs from 9 bilingual dictionaries.</div>
+  <div class="line"><b>TRADEOFF //</b> this is word + phrase substitution, not a neural model. grammar and word order are not reshuffled to match the target language — output is recognizable but rough, closer to a phrasebook than a polished translation.</div>
+  <div class="line"><b>UNCENSORED //</b> <span class="warn">nothing is filtered.</span> profanity, vulgarity, and slang are included in every dictionary by design, so the tool translates whatever you actually type rather than refusing or softening it.</div>
+  <div class="line"><b>LANGUAGES //</b> english · mandarin · hindi · spanish · french · arabic · bengali · portuguese · russian · urdu — the top 10 by total speakers.</div>
+</footer>
+
+<script>
+/* JS injected here in the final assembled file */
+</script>
+</body>
+</html>

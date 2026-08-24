@@ -1,0 +1,16 @@
+[en->es] hello => hola
+[en->es] good morning => buenos días
+[en->es] i love you => te amo
+[en->zh] i love you => 我爱你
+[es->ru] hola => привет
+[fr->es] merci => gracias
+[ru->es] привет => hola
+[zh->en] 你好 => hello
+[en->ru] shit => дерьмо
+[en->fr] shut up => ta gueule
+[en->es] fuck you => vete a la mierda
+[en->es] supercalifragilistic => supercalifragilistic
+[hi->ar] नमस्ते => नमस्ते
+[pt->en] olá => hello
+[ur->en] ہیلو => hello
+[bn->en] হ্যালো => হ্যালো

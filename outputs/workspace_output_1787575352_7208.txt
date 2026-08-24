@@ -1,0 +1,2 @@
+940:  { en: "thank you", fr: "merci" },
+941:  { en: "thanks", fr: "merci" },

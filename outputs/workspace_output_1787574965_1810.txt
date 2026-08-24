@@ -1,0 +1,7 @@
+total 24
+drwxr-xr-x  6 user user 4096 Aug 24 12:36 .
+drwxr-xr-x 20 root root 4096 Jun 22 03:39 ..
+drwxr-xr-x  4 user user 4096 Jun 19 10:20 .agent_hooks
+drwxr-xr-x 11 root root 4096 Aug 24 12:36 .browser_data
+drwxr-xr-x  3 root root 4096 Jun 22 03:37 .psiphon_data
+drwxr-xr-x  2 root root 4096 Aug 24 12:36 outputs

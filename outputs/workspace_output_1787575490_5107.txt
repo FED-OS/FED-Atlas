@@ -1,0 +1,8 @@
+hindi: [{"text":"नमस्ते","isWord":true}]
+bengali: [{"text":"হ্যালো","isWord":true}]
+hi->ar namaste: مرحبا
+hi->en namaste: hello
+bn->en hello: hello
+bn->zh hello: 你好
+hi->zh dhanyavad: 谢谢
+en->hi good morning: सुप्रभात

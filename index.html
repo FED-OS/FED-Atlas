@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNCENSORED TRANSLATOR // RAW SIGNAL</title>
+<style>
+/* =============================================================
+   UNCENSORED TRANSLATOR — "raw signal / wire transmission" UI
+   ============================================================= */
+
+:root {
+  --bg: #05080a;
+  --bg-panel: #0a0f12;
+  --bg-deep: #020405;
+  --grid: rgba(0, 255, 170, 0.04);
+  --signal: #00ffaa;
+  --signal-dim: #0a8a66;
+  --signal-glow: rgba(0, 255, 170, 0.35);
+  --warn: #ffae00;
+  --danger: #ff3b3b;
+  --text: #c8ffe6;
+  --text-dim: #5a8a78;
+  --text-faint: #2f4a42;
+  --border: rgba(0, 255, 170, 0.18);
+  --border-hot: rgba(0, 255, 170, 0.5);
+  --mono: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* scanline + grid overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0) 4px
+    );
+  mix-blend-mode: multiply;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 100%;
+  opacity: 0.5;
+}
+
+/* ---------- header ---------- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(0,255,170,0.04), transparent);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand .dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 12px var(--signal-glow);
+  animation: pulse 1.6s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.brand h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--signal);
+  text-shadow: 0 0 8px var(--signal-glow);
+}
+.brand .ver {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.status span b { color: var(--signal); font-weight: 600; }
+.status .live::before {
+  content: "● ";
+  color: var(--signal);
+  animation: pulse 1.6s infinite;
+}
+
+/* ---------- main layout ---------- */
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+/* control bar */
+.controls {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg-panel);
+  margin-bottom: 0;
+  overflow: hidden;
+}
+.lang-pick {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  position: relative;
+}
+.lang-pick label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+.lang-pick select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  outline: none;
+  padding-right: 22px;
+  text-shadow: 0 0 6px var(--signal-glow);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2300ffaa' stroke-width='1.4' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+.lang-pick select option {
+  background: var(--bg-panel);
+  color: var(--text);
+}
+.lang-pick.src { border-right: 1px solid var(--border); }
+
+.swap {
+  width: 64px;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--signal);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 18px;
+  transition: background 0.15s, transform 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.swap:hover { background: rgba(0,255,170,0.08); }
+.swap:active { transform: rotate(180deg); }
+.swap svg { width: 22px; height: 22px; }
+
+/* ---------- translator panes + wire ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+  border-top: none;
+  background: var(--bg-panel);
+  position: relative;
+  min-height: 420px;
+}
+.pane {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  position: relative;
+}
+.pane.src { border-right: 1px solid var(--border); }
+.pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.pane-head .tag {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pane-head .tag b { color: var(--signal-dim); }
+.pane.src .pane-head .tag b { color: var(--signal); }
+.pane-head .meter {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text-faint);
+}
+.pane-head .meter b { color: var(--warn); font-weight: 600; }
+
+textarea, .out {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  min-height: 280px;
+}
+textarea::placeholder { color: var(--text-faint); }
+textarea { caret-color: var(--signal); }
+
+.out {
+  color: var(--signal);
+  text-shadow: 0 0 6px var(--signal-glow);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.out.empty { color: var(--text-faint); text-shadow: none; }
+.out .cursor {
+  display: inline-block;
+  width: 9px;
+  height: 18px;
+  background: var(--signal);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s steps(2) infinite;
+  box-shadow: 0 0 8px var(--signal-glow);
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* the wire — vertical signal line down the seam */
+.wire {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--border);
+  transform: translateX(-0.5px);
+  pointer-events: none;
+  z-index: 2;
+}
+.wire .pulse {
+  position: absolute;
+  left: -2px;
+  width: 5px;
+  height: 36px;
+  background: linear-gradient(180deg, transparent, var(--signal), transparent);
+  box-shadow: 0 0 12px var(--signal-glow);
+  opacity: 0;
+}
+.wire.transmitting .pulse {
+  animation: travel 0.7s linear;
+}
+@keyframes travel {
+  0%   { top: -36px; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+/* seam node */
+.wire::before, .wire::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  width: 7px; height: 7px;
+  background: var(--bg-panel);
+  border: 1px solid var(--signal-dim);
+  border-radius: 50%;
+}
+.wire::before { top: 16px; }
+.wire::after { bottom: 16px; }
+.wire.transmitting::before, .wire.transmitting::after {
+  border-color: var(--signal);
+  box-shadow: 0 0 10px var(--signal-glow);
+}
+
+/* ---------- action bar ---------- */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-top: none;
+  background: var(--bg-panel);
+  padding: 12px 20px;
+}
+.actions .left, .actions .right { display: flex; align-items: center; gap: 14px; }
+.count {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+.count b { color: var(--text-dim); }
+.count.warn b { color: var(--warn); }
+.count.danger b { color: var(--danger); }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input { display: none; }
+.toggle .sw {
+  width: 30px; height: 16px;
+  border: 1px solid var(--border-hot);
+  border-radius: 8px;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle .sw::after {
+  content: "";
+  position: absolute;
+  top: 1px; left: 1px;
+  width: 12px; height: 12px;
+  background: var(--text-faint);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle input:checked + .sw { background: rgba(0,255,170,0.18); }
+.toggle input:checked + .sw::after { transform: translateX(14px); background: var(--signal); box-shadow: 0 0 8px var(--signal-glow); }
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--signal);
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 9px 22px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.btn:hover {
+  background: var(--signal);
+  color: var(--bg-deep);
+  box-shadow: 0 0 18px var(--signal-glow);
+}
+.btn:active { transform: translateY(1px); }
+.btn.ghost { border-color: var(--border-hot); color: var(--text-dim); }
+.btn.ghost:hover { background: rgba(0,255,170,0.08); color: var(--signal); box-shadow: none; }
+
+/* ---------- footer / disclaimer ---------- */
+footer {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 18px 24px 30px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+footer .line { margin-bottom: 4px; }
+footer b { color: var(--text-dim); }
+footer .warn { color: var(--warn); }
+
+/* signal-strength bars in header */
+.bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.bars i {
+  width: 3px;
+  background: var(--signal-dim);
+  display: block;
+}
+.bars i:nth-child(1) { height: 3px; }
+.bars i:nth-child(2) { height: 6px; }
+.bars i:nth-child(3) { height: 9px; }
+.bars i:nth-child(4) { height: 12px; }
+.bars.tx i { background: var(--signal); box-shadow: 0 0 4px var(--signal-glow); }
+
+/* responsive */
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; min-height: auto; }
+  .pane.src { border-right: none; border-bottom: 1px solid var(--border); }
+  .wire { display: none; }
+  textarea, .out { min-height: 160px; font-size: 16px; }
+  .actions { flex-direction: column; align-items: stretch; gap: 12px; }
+  .actions .left, .actions .right { justify-content: space-between; }
+  header { flex-direction: column; gap: 10px; align-items: flex-start; }
+}
+
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Uncensored Translator</h1>
+    <span class="ver">v1.0 // off-grid</span>
+  </div>
+  <div class="status">
+    <span class="live">SIGNAL LIVE</span>
+    <span>ENGINE <b>LOCAL</b></span>
+    <span>NET <b>OFF</b></span>
+    <span class="bars" id="bars"><i></i><i></i><i></i><i></i></span>
+  </div>
+</header>
+
+<main>
+  <!-- source / target selectors + swap -->
+  <div class="controls">
+    <div class="lang-pick src">
+      <label>Source // origin</label>
+      <select id="srcLang"></select>
+    </div>
+    <button class="swap" id="swapBtn" title="Swap source / target" aria-label="Swap languages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M7 4 L3 8 L7 12 M3 8 H21 M17 12 L21 16 L17 20 M21 16 H3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="lang-pick">
+      <label>Target // destination</label>
+      <select id="tgtLang"></select>
+    </div>
+  </div>
+
+  <!-- panes with the wire down the seam -->
+  <div class="grid">
+    <div class="pane src">
+      <div class="pane-head">
+        <span class="tag">TX // <b id="srcTag">english</b></span>
+        <span class="meter">INPUT</span>
+      </div>
+      <textarea id="srcText" maxlength="2000" placeholder="type anything. nothing filtered. nothing sent.//"></textarea>
+    </div>
+
+    <div class="wire" id="wire"><span class="pulse"></span></div>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span class="tag">RX // <b id="tgtTag">spanish</b></span>
+        <span class="meter">OUTPUT</span>
+      </div>
+      <div class="out empty" id="outText"><span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- action bar -->
+  <div class="actions">
+    <div class="left">
+      <span class="count" id="count"><b>0</b> / 2000 chars</span>
+      <label class="toggle" title="Translate automatically as you type">
+        <input type="checkbox" id="autoToggle" checked>
+        <span class="sw"></span>
+        AUTO-TX
+      </label>
+    </div>
+    <div class="right">
+      <button class="btn ghost" id="clearBtn">Clear</button>
+      <button class="btn" id="txBtn">▶ Transmit</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="line"><b>HOW IT WORKS //</b> a self-contained dictionary engine runs entirely in your browser. no servers, no apis, no network calls. translation pivots through english (X → EN → Y) to cover all 90 language pairs from 9 bilingual dictionaries.</div>
+  <div class="line"><b>TRADEOFF //</b> this is word + phrase substitution, not a neural model. grammar and word order are not reshuffled to match the target language — output is recognizable but rough, closer to a phrasebook than a polished translation.</div>
+  <div class="line"><b>UNCENSORED //</b> <span class="warn">nothing is filtered.</span> profanity, vulgarity, and slang are included in every dictionary by design, so the tool translates whatever you actually type rather than refusing or softening it.</div>
+  <div class="line"><b>LANGUAGES //</b> english · mandarin · hindi · spanish · french · arabic · bengali · portuguese · russian · urdu — the top 10 by total speakers.</div>
+</footer>
+
+<script>
+// =============================================================
+//  UNCENSORED TRANSLATOR — DICTIONARY DATA
+//  Pivot language: English (en)
+//  Each entry: { en: "...", xx: "..." }
+//  Phrase keys are matched longest-first by the engine.
+//  Nothing is filtered. Profanity/vulgarity is included on purpose
+//  so the tool actually translates "any words."
+// =============================================================
+
+// ---------- EN <-> ZH (Mandarin, simplified) ----------
+const DICT_EN_ZH = [
+  // greetings & politeness
+  { en: "hello", zh: "你好" },
+  { en: "hi", zh: "嗨" },
+  { en: "good morning", zh: "早上好" },
+  { en: "good afternoon", zh: "下午好" },
+  { en: "good evening", zh: "晚上好" },
+  { en: "good night", zh: "晚安" },
+  { en: "goodbye", zh: "再见" },
+  { en: "bye", zh: "再见" },
+  { en: "please", zh: "请" },
+  { en: "thank you", zh: "谢谢" },
+  { en: "thanks", zh: "谢谢" },
+  { en: "you're welcome", zh: "不客气" },
+  { en: "sorry", zh: "对不起" },
+  { en: "excuse me", zh: "打扰一下" },
+  { en: "yes", zh: "是" },
+  { en: "no", zh: "不" },
+  { en: "okay", zh: "好的" },
+  { en: "ok", zh: "好的" },
+  // pronouns
+  { en: "i", zh: "我" },
+  { en: "you", zh: "你" },
+  { en: "he", zh: "他" },
+  { en: "she", zh: "她" },
+  { en: "it", zh: "它" },
+  { en: "we", zh: "我们" },
+  { en: "they", zh: "他们" },
+  { en: "me", zh: "我" },
+  { en: "my", zh: "我的" },
+  { en: "your", zh: "你的" },
+  { en: "his", zh: "他的" },
+  { en: "her", zh: "她的" },
+  { en: "our", zh: "我们的" },
+  { en: "their", zh: "他们的" },
+  { en: "this", zh: "这个" },
+  { en: "that", zh: "那个" },
+  // question words
+  { en: "what", zh: "什么" },
+  { en: "where", zh: "哪里" },
+  { en: "when", zh: "什么时候" },
+  { en: "why", zh: "为什么" },
+  { en: "who", zh: "谁" },
+  { en: "how", zh: "怎么" },
+  { en: "how much", zh: "多少钱" },
+  { en: "how many", zh: "多少" },
+  { en: "which", zh: "哪个" },
+  // common verbs
+  { en: "is", zh: "是" },
+  { en: "are", zh: "是" },
+  { en: "am", zh: "是" },
+  { en: "was", zh: "是" },
+  { en: "were", zh: "是" },
+  { en: "be", zh: "是" },
+  { en: "have", zh: "有" },
+  { en: "has", zh: "有" },
+  { en: "had", zh: "有" },
+  { en: "do", zh: "做" },
+  { en: "does", zh: "做" },
+  { en: "did", zh: "做" },
+  { en: "go", zh: "去" },
+  { en: "goes", zh: "去" },
+  { en: "went", zh: "去" },
+  { en: "come", zh: "来" },
+  { en: "comes", zh: "来" },
+  { en: "came", zh: "来" },
+  { en: "see", zh: "看" },
+  { en: "saw", zh: "看" },
+  { en: "look", zh: "看" },
+  { en: "hear", zh: "听" },
+  { en: "listen", zh: "听" },
+  { en: "say", zh: "说" },
+  { en: "said", zh: "说" },
+  { en: "speak", zh: "说" },
+  { en: "talk", zh: "说话" },
+  { en: "know", zh: "知道" },
+  { en: "knew", zh: "知道" },
+  { en: "think", zh: "想" },
+  { en: "thought", zh: "想" },
+  { en: "want", zh: "想要" },
+  { en: "wanted", zh: "想要" },
+  { en: "need", zh: "需要" },
+  { en: "like", zh: "喜欢" },
+  { en: "liked", zh: "喜欢" },
+  { en: "love", zh: "爱" },
+  { en: "loved", zh: "爱" },
+  { en: "hate", zh: "恨" },
+  { en: "eat", zh: "吃" },
+  { en: "ate", zh: "吃" },
+  { en: "drink", zh: "喝" },
+  { en: "drank", zh: "喝" },
+  { en: "sleep", zh: "睡觉" },
+  { en: "slept", zh: "睡觉" },
+  { en: "work", zh: "工作" },
+  { en: "worked", zh: "工作" },
+  { en: "play", zh: "玩" },
+  { en: "played", zh: "玩" },
+  { en: "buy", zh: "买" },
+  { en: "bought", zh: "买" },
+  { en: "sell", zh: "卖" },
+  { en: "give", zh: "给" },
+  { en: "gave", zh: "给" },
+  { en: "take", zh: "拿" },
+  { en: "took", zh: "拿" },
+  { en: "get", zh: "得到" },
+  { en: "got", zh: "得到" },
+  { en: "make", zh: "做" },
+  { en: "made", zh: "做" },
+  { en: "use", zh: "用" },
+  { en: "used", zh: "用" },
+  { en: "help", zh: "帮助" },
+  { en: "helped", zh: "帮助" },
+  { en: "call", zh: "叫" },
+  { en: "called", zh: "叫" },
+  { en: "try", zh: "试" },
+  { en: "tried", zh: "试" },
+  { en: "ask", zh: "问" },
+  { en: "asked", zh: "问" },
+  { en: "answer", zh: "回答" },
+  { en: "answered", zh: "回答" },
+  { en: "find", zh: "找" },
+  { en: "found", zh: "找到" },
+  { en: "lose", zh: "丢" },
+  { en: "lost", zh: "丢了" },
+  { en: "open", zh: "开" },
+  { en: "close", zh: "关" },
+  { en: "start", zh: "开始" },
+  { en: "stop", zh: "停" },
+  { en: "begin", zh: "开始" },
+  { en: "end", zh: "结束" },
+  { en: "finish", zh: "完成" },
+  { en: "live", zh: "住" },
+  { en: "lived", zh: "住" },
+  { en: "die", zh: "死" },
+  { en: "died", zh: "死了" },
+  { en: "kill", zh: "杀" },
+  { en: "killed", zh: "杀了" },
+  { en: "run", zh: "跑" },
+  { en: "ran", zh: "跑了" },
+  { en: "walk", zh: "走" },
+  { en: "walked", zh: "走了" },
+  { en: "drive", zh: "开车" },
+  { en: "drove", zh: "开了车" },
+  { en: "fly", zh: "飞" },
+  { en: "flew", zh: "飞了" },
+  { en: "read", zh: "读" },
+  { en: "write", zh: "写" },
+  { en: "wrote", zh: "写了" },
+  { en: "learn", zh: "学" },
+  { en: "teach", zh: "教" },
+  { en: "understand", zh: "懂" },
+  { en: "understood", zh: "懂了" },
+  { en: "remember", zh: "记得" },
+  { en: "forget", zh: "忘记" },
+  { en: "believe", zh: "相信" },
+  { en: "feel", zh: "感觉" },
+  { en: "felt", zh: "感觉" },
+  // nouns — people
+  { en: "man", zh: "男人" },
+  { en: "woman", zh: "女人" },
+  { en: "boy", zh: "男孩" },
+  { en: "girl", zh: "女孩" },
+  { en: "child", zh: "孩子" },
+  { en: "children", zh: "孩子们" },
+  { en: "baby", zh: "婴儿" },
+  { en: "father", zh: "爸爸" },
+  { en: "mother", zh: "妈妈" },
+  { en: "dad", zh: "爸爸" },
+  { en: "mom", zh: "妈妈" },
+  { en: "son", zh: "儿子" },
+  { en: "daughter", zh: "女儿" },
+  { en: "brother", zh: "兄弟" },
+  { en: "sister", zh: "姐妹" },
+  { en: "friend", zh: "朋友" },
+  { en: "friends", zh: "朋友们" },
+  { en: "family", zh: "家庭" },
+  { en: "people", zh: "人" },
+  { en: "person", zh: "人" },
+  { en: "name", zh: "名字" },
+  // nouns — places / things
+  { en: "house", zh: "房子" },
+  { en: "home", zh: "家" },
+  { en: "room", zh: "房间" },
+  { en: "door", zh: "门" },
+  { en: "window", zh: "窗户" },
+  { en: "school", zh: "学校" },
+  { en: "work", zh: "工作" },
+  { en: "job", zh: "工作" },
+  { en: "car", zh: "车" },
+  { en: "bus", zh: "公交车" },
+  { en: "train", zh: "火车" },
+  { en: "plane", zh: "飞机" },
+  { en: "boat", zh: "船" },
+  { en: "road", zh: "路" },
+  { en: "street", zh: "街道" },
+  { en: "city", zh: "城市" },
+  { en: "country", zh: "国家" },
+  { en: "world", zh: "世界" },
+  { en: "water", zh: "水" },
+  { en: "fire", zh: "火" },
+  { en: "air", zh: "空气" },
+  { en: "earth", zh: "地球" },
+  { en: "sun", zh: "太阳" },
+  { en: "moon", zh: "月亮" },
+  { en: "star", zh: "星星" },
+  { en: "sky", zh: "天空" },
+  { en: "rain", zh: "雨" },
+  { en: "snow", zh: "雪" },
+  { en: "wind", zh: "风" },
+  { en: "tree", zh: "树" },
+  { en: "flower", zh: "花" },
+  { en: "animal", zh: "动物" },
+  { en: "dog", zh: "狗" },
+  { en: "cat", zh: "猫" },
+  { en: "fish", zh: "鱼" },
+  { en: "bird", zh: "鸟" },
+  { en: "horse", zh: "马" },
+  { en: "food", zh: "食物" },
+  { en: "rice", zh: "米饭" },
+  { en: "bread", zh: "面包" },
+  { en: "meat", zh: "肉" },
+  { en: "chicken", zh: "鸡肉" },
+  { en: "egg", zh: "鸡蛋" },
+  { en: "milk", zh: "牛奶" },
+  { en: "tea", zh: "茶" },
+  { en: "coffee", zh: "咖啡" },
+  { en: "beer", zh: "啤酒" },
+  { en: "wine", zh: "葡萄酒" },
+  { en: "money", zh: "钱" },
+  { en: "book", zh: "书" },
+  { en: "phone", zh: "电话" },
+  { en: "computer", zh: "电脑" },
+  { en: "table", zh: "桌子" },
+  { en: "chair", zh: "椅子" },
+  { en: "bed", zh: "床" },
+  { en: "time", zh: "时间" },
+  { en: "day", zh: "天" },
+  { en: "night", zh: "夜晚" },
+  { en: "week", zh: "周" },
+  { en: "month", zh: "月" },
+  { en: "year", zh: "年" },
+  { en: "today", zh: "今天" },
+  { en: "tomorrow", zh: "明天" },
+  { en: "yesterday", zh: "昨天" },
+  { en: "morning", zh: "早上" },
+  { en: "afternoon", zh: "下午" },
+  { en: "evening", zh: "晚上" },
+  { en: "love", zh: "爱" },
+  { en: "life", zh: "生活" },
+  { en: "death", zh: "死亡" },
+  { en: "war", zh: "战争" },
+  { en: "peace", zh: "和平" },
+  { en: "god", zh: "上帝" },
+  // adjectives
+  { en: "good", zh: "好" },
+  { en: "bad", zh: "坏" },
+  { en: "big", zh: "大" },
+  { en: "small", zh: "小" },
+  { en: "new", zh: "新" },
+  { en: "old", zh: "旧" },
+  { en: "hot", zh: "热" },
+  { en: "cold", zh: "冷" },
+  { en: "fast", zh: "快" },
+  { en: "slow", zh: "慢" },
+  { en: "happy", zh: "快乐" },
+  { en: "sad", zh: "伤心" },
+  { en: "angry", zh: "生气" },
+  { en: "tired", zh: "累" },
+  { en: "sick", zh: "病" },
+  { en: "beautiful", zh: "漂亮" },
+  { en: "ugly", zh: "丑" },
+  { en: "rich", zh: "富" },
+  { en: "poor", zh: "穷" },
+  { en: "strong", zh: "强" },
+  { en: "weak", zh: "弱" },
+  { en: "young", zh: "年轻" },
+  { en: "easy", zh: "容易" },
+  { en: "hard", zh: "难" },
+  { en: "right", zh: "对" },
+  { en: "wrong", zh: "错" },
+  { en: "true", zh: "真" },
+  { en: "false", zh: "假" },
+  { en: "same", zh: "一样" },
+  { en: "different", zh: "不同" },
+  { en: "many", zh: "多" },
+  { en: "much", zh: "多" },
+  { en: "more", zh: "更多" },
+  { en: "most", zh: "最多" },
+  { en: "little", zh: "少" },
+  { en: "few", zh: "少" },
+  { en: "less", zh: "更少" },
+  { en: "all", zh: "所有" },
+  { en: "some", zh: "一些" },
+  { en: "no", zh: "没有" },
+  { en: "every", zh: "每" },
+  // adverbs / connectors
+  { en: "very", zh: "很" },
+  { en: "too", zh: "也" },
+  { en: "also", zh: "也" },
+  { en: "and", zh: "和" },
+  { en: "or", zh: "或" },
+  { en: "but", zh: "但是" },
+  { en: "because", zh: "因为" },
+  { en: "so", zh: "所以" },
+  { en: "if", zh: "如果" },
+  { en: "then", zh: "然后" },
+  { en: "now", zh: "现在" },
+  { en: "here", zh: "这里" },
+  { en: "there", zh: "那里" },
+  { en: "not", zh: "不" },
+  { en: "only", zh: "只" },
+  { en: "just", zh: "就" },
+  { en: "still", zh: "还" },
+  { en: "again", zh: "再" },
+  { en: "always", zh: "总是" },
+  { en: "never", zh: "从不" },
+  { en: "sometimes", zh: "有时" },
+  { en: "maybe", zh: "也许" },
+  { en: "perhaps", zh: "也许" },
+  // numbers
+  { en: "one", zh: "一" },
+  { en: "two", zh: "二" },
+  { en: "three", zh: "三" },
+  { en: "four", zh: "四" },
+  { en: "five", zh: "五" },
+  { en: "six", zh: "六" },
+  { en: "seven", zh: "七" },
+  { en: "eight", zh: "八" },
+  { en: "nine", zh: "九" },
+  { en: "ten", zh: "十" },
+  { en: "hundred", zh: "百" },
+  { en: "thousand", zh: "千" },
+  { en: "million", zh: "百万" },
+  // question / misc phrases
+  { en: "how are you", zh: "你好吗" },
+  { en: "what is your name", zh: "你叫什么名字" },
+  { en: "my name is", zh: "我的名字是" },
+  { en: "i don't know", zh: "我不知道" },
+  { en: "i don't understand", zh: "我不懂" },
+  { en: "i love you", zh: "我爱你" },
+  { en: "i like you", zh: "我喜欢你" },
+  { en: "i miss you", zh: "我想你" },
+  { en: "where is the bathroom", zh: "洗手间在哪里" },
+  { en: "how much is it", zh: "多少钱" },
+  { en: "i am hungry", zh: "我饿了" },
+  { en: "i am thirsty", zh: "我渴了" },
+  { en: "i am tired", zh: "我累了" },
+  { en: "see you later", zh: "回头见" },
+  { en: "what time is it", zh: "现在几点" },
+  // profanity / vulgarity (uncensored on purpose)
+  { en: "fuck", zh: "操" },
+  { en: "fucking", zh: "他妈的" },
+  { en: "shit", zh: "狗屎" },
+  { en: "bitch", zh: "婊子" },
+  { en: "ass", zh: "屁股" },
+  { en: "asshole", zh: "混蛋" },
+  { en: "dick", zh: "鸡巴" },
+  { en: "pussy", zh: "逼" },
+  { en: "cock", zh: "鸡巴" },
+  { en: "damn", zh: "该死" },
+  { en: "hell", zh: "地狱" },
+  { en: "idiot", zh: "白痴" },
+  { en: "stupid", zh: "笨" },
+  { en: "crazy", zh: "疯" },
+  { en: "bastard", zh: "杂种" },
+  { en: "motherfucker", zh: "他妈的混蛋" },
+  { en: "bullshit", zh: "胡说八道" },
+  { en: "fuck you", zh: "操你" },
+  { en: "go to hell", zh: "去死吧" },
+  { en: "shut up", zh: "闭嘴" },
+];
+
+// ---------- EN <-> HI (Hindi, devanagari) ----------
+const DICT_EN_HI = [
+  { en: "hello", hi: "नमस्ते" },
+  { en: "hi", hi: "नमस्ते" },
+  { en: "good morning", hi: "सुप्रभात" },
+  { en: "good evening", hi: "शुभ संध्या" },
+  { en: "good night", hi: "शुभ रात्रि" },
+  { en: "goodbye", hi: "अलविदा" },
+  { en: "bye", hi: "अलविदा" },
+  { en: "please", hi: "कृपया" },
+  { en: "thank you", hi: "धन्यवाद" },
+  { en: "thanks", hi: "धन्यवाद" },
+  { en: "sorry", hi: "माफ़ कीजिए" },
+  { en: "yes", hi: "हाँ" },
+  { en: "no", hi: "नहीं" },
+  { en: "okay", hi: "ठीक है" },
+  { en: "ok", hi: "ठीक है" },
+  { en: "i", hi: "मैं" },
+  { en: "you", hi: "तुम" },
+  { en: "he", hi: "वह" },
+  { en: "she", hi: "वह" },
+  { en: "we", hi: "हम" },
+  { en: "they", hi: "वे" },
+  { en: "me", hi: "मुझे" },
+  { en: "my", hi: "मेरा" },
+  { en: "your", hi: "तुम्हारा" },
+  { en: "what", hi: "क्या" },
+  { en: "where", hi: "कहाँ" },
+  { en: "when", hi: "कब" },
+  { en: "why", hi: "क्यों" },
+  { en: "who", hi: "कौन" },
+  { en: "how", hi: "कैसे" },
+  { en: "is", hi: "है" },
+  { en: "are", hi: "हैं" },
+  { en: "am", hi: "हूँ" },
+  { en: "have", hi: "है" },
+  { en: "has", hi: "है" },
+  { en: "do", hi: "करो" },
+  { en: "go", hi: "जाओ" },
+  { en: "come", hi: "आओ" },
+  { en: "see", hi: "देखो" },
+  { en: "look", hi: "देखो" },
+  { en: "say", hi: "कहो" },
+  { en: "speak", hi: "बोलो" },
+  { en: "know", hi: "जानो" },
+  { en: "think", hi: "सोचो" },
+  { en: "want", hi: "चाहो" },
+  { en: "need", hi: "ज़रूरत" },
+  { en: "like", hi: "पसंद" },
+  { en: "love", hi: "प्यार" },
+  { en: "eat", hi: "खाओ" },
+  { en: "drink", hi: "पियो" },
+  { en: "sleep", hi: "सोओ" },
+  { en: "work", hi: "काम" },
+  { en: "play", hi: "खेलो" },
+  { en: "buy", hi: "खरीदो" },
+  { en: "give", hi: "दो" },
+  { en: "take", hi: "लो" },
+  { en: "make", hi: "बनाओ" },
+  { en: "help", hi: "मदद" },
+  { en: "ask", hi: "पूछो" },
+  { en: "answer", hi: "जवाब" },
+  { en: "find", hi: "ढूँढो" },
+  { en: "open", hi: "खोलो" },
+  { en: "close", hi: "बंद करो" },
+  { en: "man", hi: "आदमी" },
+  { en: "woman", hi: "औरत" },
+  { en: "boy", hi: "लड़का" },
+  { en: "girl", hi: "लड़की" },
+  { en: "child", hi: "बच्चा" },
+  { en: "father", hi: "पिता" },
+  { en: "mother", hi: "माता" },
+  { en: "son", hi: "बेटा" },
+  { en: "daughter", hi: "बेटी" },
+  { en: "friend", hi: "दोस्त" },
+  { en: "family", hi: "परिवार" },
+  { en: "people", hi: "लोग" },
+  { en: "name", hi: "नाम" },
+  { en: "house", hi: "घर" },
+  { en: "home", hi: "घर" },
+  { en: "water", hi: "पानी" },
+  { en: "fire", hi: "आग" },
+  { en: "sun", hi: "सूरज" },
+  { en: "moon", hi: "चाँद" },
+  { en: "sky", hi: "आसमान" },
+  { en: "rain", hi: "बारिश" },
+  { en: "food", hi: "खाना" },
+  { en: "rice", hi: "चावल" },
+  { en: "bread", hi: "रोटी" },
+  { en: "milk", hi: "दूध" },
+  { en: "tea", hi: "चाय" },
+  { en: "coffee", hi: "कॉफी" },
+  { en: "money", hi: "पैसा" },
+  { en: "book", hi: "किताब" },
+  { en: "phone", hi: "फ़ोन" },
+  { en: "car", hi: "गाड़ी" },
+  { en: "time", hi: "समय" },
+  { en: "day", hi: "दिन" },
+  { en: "night", hi: "रात" },
+  { en: "year", hi: "साल" },
+  { en: "today", hi: "आज" },
+  { en: "tomorrow", hi: "कल" },
+  { en: "yesterday", hi: "कल" },
+  { en: "good", hi: "अच्छा" },
+  { en: "bad", hi: "बुरा" },
+  { en: "big", hi: "बड़ा" },
+  { en: "small", hi: "छोटा" },
+  { en: "new", hi: "नया" },
+  { en: "old", hi: "पुराना" },
+  { en: "hot", hi: "गरम" },
+  { en: "cold", hi: "ठंडा" },
+  { en: "fast", hi: "तेज़" },
+  { en: "happy", hi: "खुश" },
+  { en: "sad", hi: "दुखी" },
+  { en: "angry", hi: "गुस्सा" },
+  { en: "tired", hi: "थका" },
+  { en: "beautiful", hi: "सुंदर" },
+  { en: "rich", hi: "अमीर" },
+  { en: "poor", hi: "गरीब" },
+  { en: "strong", hi: "मज़बूत" },
+  { en: "easy", hi: "आसान" },
+  { en: "hard", hi: "मुश्किल" },
+  { en: "right", hi: "सही" },
+  { en: "wrong", hi: "गलत" },
+  { en: "true", hi: "सच" },
+  { en: "false", hi: "झूठ" },
+  { en: "many", hi: "बहुत" },
+  { en: "more", hi: "और" },
+  { en: "all", hi: "सब" },
+  { en: "some", hi: "कुछ" },
+  { en: "very", hi: "बहुत" },
+  { en: "and", hi: "और" },
+  { en: "or", hi: "या" },
+  { en: "but", hi: "लेकिन" },
+  { en: "because", hi: "क्योंकि" },
+  { en: "so", hi: "तो" },
+  { en: "if", hi: "अगर" },
+  { en: "now", hi: "अभी" },
+  { en: "here", hi: "यहाँ" },
+  { en: "there", hi: "वहाँ" },
+  { en: "not", hi: "नहीं" },
+  { en: "only", hi: "सिर्फ़" },
+  { en: "again", hi: "फिर" },
+  { en: "always", hi: "हमेशा" },
+  { en: "never", hi: "कभी नहीं" },
+  { en: "maybe", hi: "शायद" },
+  { en: "one", hi: "एक" },
+  { en: "two", hi: "दो" },
+  { en: "three", hi: "तीन" },
+  { en: "four", hi: "चार" },
+  { en: "five", hi: "पाँच" },
+  { en: "six", hi: "छह" },
+  { en: "seven", hi: "सात" },
+  { en: "eight", hi: "आठ" },
+  { en: "nine", hi: "नौ" },
+  { en: "ten", hi: "दस" },
+  { en: "how are you", hi: "आप कैसे हैं" },
+  { en: "what is your name", hi: "आपका नाम क्या है" },
+  { en: "my name is", hi: "मेरा नाम है" },
+  { en: "i don't know", hi: "मुझे नहीं पता" },
+  { en: "i love you", hi: "मैं तुमसे प्यार करता हूँ" },
+  { en: "i like you", hi: "मुझे तुम पसंद हो" },
+  { en: "i am hungry", hi: "मुझे भूख लगी है" },
+  { en: "i am tired", hi: "मैं थक गया हूँ" },
+  { en: "see you later", hi: "बाद में मिलते हैं" },
+  // profanity
+  { en: "fuck", hi: "चोद" },
+  { en: "fucking", hi: "चुदाई" },
+  { en: "shit", hi: "बकवास" },
+  { en: "bitch", hi: "रंडी" },
+  { en: "asshole", hi: "गांडू" },
+  { en: "dick", hi: "लंड" },
+  { en: "pussy", hi: "चूत" },
+  { en: "damn", hi: "ख़राब" },
+  { en: "idiot", hi: "बेवकूफ़" },
+  { en: "stupid", hi: "बेवकूफ़" },
+  { en: "crazy", hi: "पागल" },
+  { en: "bastard", hi: "हरामी" },
+  { en: "bullshit", hi: "बकवास" },
+  { en: "fuck you", hi: "चोद तुझे" },
+  { en: "shut up", hi: "चुप करो" },
+];
+
+// ---------- EN <-> ES (Spanish) ----------
+const DICT_EN_ES = [
+  { en: "hello", es: "hola" },
+  { en: "hi", es: "hola" },
+  { en: "good morning", es: "buenos días" },
+  { en: "good afternoon", es: "buenas tardes" },
+  { en: "good evening", es: "buenas noches" },
+  { en: "good night", es: "buenas noches" },
+  { en: "goodbye", es: "adiós" },
+  { en: "bye", es: "adiós" },
+  { en: "please", es: "por favor" },
+  { en: "thank you", es: "gracias" },
+  { en: "thanks", es: "gracias" },
+  { en: "you're welcome", es: "de nada" },
+  { en: "sorry", es: "lo siento" },
+  { en: "excuse me", es: "disculpe" },
+  { en: "yes", es: "sí" },
+  { en: "no", es: "no" },
+  { en: "okay", es: "vale" },
+  { en: "ok", es: "vale" },
+  { en: "i", es: "yo" },
+  { en: "you", es: "tú" },
+  { en: "he", es: "él" },
+  { en: "she", es: "ella" },
+  { en: "it", es: "eso" },
+  { en: "we", es: "nosotros" },
+  { en: "they", es: "ellos" },
+  { en: "me", es: "me" },
+  { en: "my", es: "mi" },
+  { en: "your", es: "tu" },
+  { en: "his", es: "su" },
+  { en: "her", es: "su" },
+  { en: "our", es: "nuestro" },
+  { en: "their", es: "su" },
+  { en: "this", es: "esto" },
+  { en: "that", es: "eso" },
+  { en: "what", es: "qué" },
+  { en: "where", es: "dónde" },
+  { en: "when", es: "cuándo" },
+  { en: "why", es: "por qué" },
+  { en: "who", es: "quién" },
+  { en: "how", es: "cómo" },
+  { en: "how much", es: "cuánto" },
+  { en: "how many", es: "cuántos" },
+  { en: "which", es: "cuál" },
+  { en: "is", es: "es" },
+  { en: "are", es: "son" },
+  { en: "am", es: "soy" },
+  { en: "was", es: "era" },
+  { en: "were", es: "eran" },
+  { en: "be", es: "ser" },
+  { en: "have", es: "tener" },
+  { en: "has", es: "tiene" },
+  { en: "had", es: "tenía" },
+  { en: "do", es: "hacer" },
+  { en: "does", es: "hace" },
+  { en: "did", es: "hizo" },
+  { en: "go", es: "ir" },
+  { en: "goes", es: "va" },
+  { en: "went", es: "fue" },
+  { en: "come", es: "venir" },
+  { en: "comes", es: "viene" },
+  { en: "came", es: "vino" },
+  { en: "see", es: "ver" },
+  { en: "saw", es: "vio" },
+  { en: "look", es: "mirar" },
+  { en: "hear", es: "oír" },
+  { en: "listen", es: "escuchar" },
+  { en: "say", es: "decir" },
+  { en: "said", es: "dijo" },
+  { en: "speak", es: "hablar" },
+  { en: "talk", es: "hablar" },
+  { en: "know", es: "saber" },
+  { en: "knew", es: "sabía" },
+  { en: "think", es: "pensar" },
+  { en: "thought", es: "pensó" },
+  { en: "want", es: "querer" },
+  { en: "wanted", es: "quería" },
+  { en: "need", es: "necesitar" },
+  { en: "like", es: "gustar" },
+  { en: "liked", es: "gustaba" },
+  { en: "love", es: "amar" },
+  { en: "loved", es: "amó" },
+  { en: "hate", es: "odiar" },
+  { en: "eat", es: "comer" },
+  { en: "ate", es: "comió" },
+  { en: "drink", es: "beber" },
+  { en: "drank", es: "bebió" },
+  { en: "sleep", es: "dormir" },
+  { en: "slept", es: "durmió" },
+  { en: "work", es: "trabajar" },
+  { en: "worked", es: "trabajó" },
+  { en: "play", es: "jugar" },
+  { en: "played", es: "jugó" },
+  { en: "buy", es: "comprar" },
+  { en: "bought", es: "compró" },
+  { en: "sell", es: "vender" },
+  { en: "give", es: "dar" },
+  { en: "gave", es: "dio" },
+  { en: "take", es: "tomar" },
+  { en: "took", es: "tomó" },
+  { en: "get", es: "conseguir" },
+  { en: "got", es: "consiguió" },
+  { en: "make", es: "hacer" },
+  { en: "made", es: "hizo" },
+  { en: "use", es: "usar" },
+  { en: "used", es: "usó" },
+  { en: "help", es: "ayudar" },
+  { en: "helped", es: "ayudó" },
+  { en: "call", es: "llamar" },
+  { en: "called", es: "llamó" },
+  { en: "try", es: "intentar" },
+  { en: "tried", es: "intentó" },
+  { en: "ask", es: "preguntar" },
+  { en: "asked", es: "preguntó" },
+  { en: "answer", es: "responder" },
+  { en: "answered", es: "respondió" },
+  { en: "find", es: "encontrar" },
+  { en: "found", es: "encontró" },
+  { en: "lose", es: "perder" },
+  { en: "lost", es: "perdió" },
+  { en: "open", es: "abrir" },
+  { en: "close", es: "cerrar" },
+  { en: "start", es: "empezar" },
+  { en: "stop", es: "parar" },
+  { en: "begin", es: "empezar" },
+  { en: "end", es: "terminar" },
+  { en: "finish", es: "terminar" },
+  { en: "live", es: "vivir" },
+  { en: "lived", es: "vivió" },
+  { en: "die", es: "morir" },
+  { en: "died", es: "murió" },
+  { en: "kill", es: "matar" },
+  { en: "killed", es: "mató" },
+  { en: "run", es: "correr" },
+  { en: "ran", es: "corrió" },
+  { en: "walk", es: "caminar" },
+  { en: "walked", es: "caminó" },
+  { en: "drive", es: "conducir" },
+  { en: "drove", es: "condujo" },
+  { en: "fly", es: "volar" },
+  { en: "flew", es: "voló" },
+  { en: "read", es: "leer" },
+  { en: "write", es: "escribir" },
+  { en: "wrote", es: "escribió" },
+  { en: "learn", es: "aprender" },
+  { en: "teach", es: "enseñar" },
+  { en: "understand", es: "entender" },
+  { en: "understood", es: "entendió" },
+  { en: "remember", es: "recordar" },
+  { en: "forget", es: "olvidar" },
+  { en: "believe", es: "creer" },
+  { en: "feel", es: "sentir" },
+  { en: "felt", es: "sintió" },
+  { en: "man", es: "hombre" },
+  { en: "woman", es: "mujer" },
+  { en: "boy", es: "niño" },
+  { en: "girl", es: "niña" },
+  { en: "child", es: "niño" },
+  { en: "children", es: "niños" },
+  { en: "baby", es: "bebé" },
+  { en: "father", es: "padre" },
+  { en: "mother", es: "madre" },
+  { en: "dad", es: "papá" },
+  { en: "mom", es: "mamá" },
+  { en: "son", es: "hijo" },
+  { en: "daughter", es: "hija" },
+  { en: "brother", es: "hermano" },
+  { en: "sister", es: "hermana" },
+  { en: "friend", es: "amigo" },
+  { en: "friends", es: "amigos" },
+  { en: "family", es: "familia" },
+  { en: "people", es: "gente" },
+  { en: "person", es: "persona" },
+  { en: "name", es: "nombre" },
+  { en: "house", es: "casa" },
+  { en: "home", es: "casa" },
+  { en: "room", es: "habitación" },
+  { en: "door", es: "puerta" },
+  { en: "window", es: "ventana" },
+  { en: "school", es: "escuela" },
+  { en: "work", es: "trabajo" },
+  { en: "job", es: "trabajo" },
+  { en: "car", es: "coche" },
+  { en: "bus", es: "autobús" },
+  { en: "train", es: "tren" },
+  { en: "plane", es: "avión" },
+  { en: "boat", es: "barco" },
+  { en: "road", es: "camino" },
+  { en: "street", es: "calle" },
+  { en: "city", es: "ciudad" },
+  { en: "country", es: "país" },
+  { en: "world", es: "mundo" },
+  { en: "water", es: "agua" },
+  { en: "fire", es: "fuego" },
+  { en: "air", es: "aire" },
+  { en: "earth", es: "tierra" },
+  { en: "sun", es: "sol" },
+  { en: "moon", es: "luna" },
+  { en: "star", es: "estrella" },
+  { en: "sky", es: "cielo" },
+  { en: "rain", es: "lluvia" },
+  { en: "snow", es: "nieve" },
+  { en: "wind", es: "viento" },
+  { en: "tree", es: "árbol" },
+  { en: "flower", es: "flor" },
+  { en: "animal", es: "animal" },
+  { en: "dog", es: "perro" },
+  { en: "cat", es: "gato" },
+  { en: "fish", es: "pez" },
+  { en: "bird", es: "pájaro" },
+  { en: "horse", es: "caballo" },
+  { en: "food", es: "comida" },
+  { en: "rice", es: "arroz" },
+  { en: "bread", es: "pan" },
+  { en: "meat", es: "carne" },
+  { en: "chicken", es: "pollo" },
+  { en: "egg", es: "huevo" },
+  { en: "milk", es: "leche" },
+  { en: "tea", es: "té" },
+  { en: "coffee", es: "café" },
+  { en: "beer", es: "cerveza" },
+  { en: "wine", es: "vino" },
+  { en: "money", es: "dinero" },
+  { en: "book", es: "libro" },
+  { en: "phone", es: "teléfono" },
+  { en: "computer", es: "ordenador" },
+  { en: "table", es: "mesa" },
+  { en: "chair", es: "silla" },
+  { en: "bed", es: "cama" },
+  { en: "time", es: "tiempo" },
+  { en: "day", es: "día" },
+  { en: "night", es: "noche" },
+  { en: "week", es: "semana" },
+  { en: "month", es: "mes" },
+  { en: "year", es: "año" },
+  { en: "today", es: "hoy" },
+  { en: "tomorrow", es: "mañana" },
+  { en: "yesterday", es: "ayer" },
+  { en: "morning", es: "mañana" },
+  { en: "afternoon", es: "tarde" },
+  { en: "evening", es: "tarde" },
+  { en: "love", es: "amor" },
+  { en: "life", es: "vida" },
+  { en: "death", es: "muerte" },
+  { en: "war", es: "guerra" },
+  { en: "peace", es: "paz" },
+  { en: "god", es: "dios" },
+  { en: "good", es: "bueno" },
+  { en: "bad", es: "malo" },
+  { en: "big", es: "grande" },
+  { en: "small", es: "pequeño" },
+  { en: "new", es: "nuevo" },
+  { en: "old", es: "viejo" },
+  { en: "hot", es: "caliente" },
+  { en: "cold", es: "frío" },
+  { en: "fast", es: "rápido" },
+  { en: "slow", es: "lento" },
+  { en: "happy", es: "feliz" },
+  { en: "sad", es: "triste" },
+  { en: "angry", es: "enfadado" },
+  { en: "tired", es: "cansado" },
+  { en: "sick", es: "enfermo" },
+  { en: "beautiful", es: "hermoso" },
+  { en: "ugly", es: "feo" },
+  { en: "rich", es: "rico" },
+  { en: "poor", es: "pobre" },
+  { en: "strong", es: "fuerte" },
+  { en: "weak", es: "débil" },
+  { en: "young", es: "joven" },
+  { en: "easy", es: "fácil" },
+  { en: "hard", es: "difícil" },
+  { en: "right", es: "correcto" },
+  { en: "wrong", es: "equivocado" },
+  { en: "true", es: "verdadero" },
+  { en: "false", es: "falso" },
+  { en: "same", es: "mismo" },
+  { en: "different", es: "diferente" },
+  { en: "many", es: "muchos" },
+  { en: "much", es: "mucho" },
+  { en: "more", es: "más" },
+  { en: "most", es: "la mayoría" },
+  { en: "little", es: "poco" },
+  { en: "few", es: "pocos" },
+  { en: "less", es: "menos" },
+  { en: "all", es: "todo" },
+  { en: "some", es: "algunos" },
+  { en: "no", es: "ninguno" },
+  { en: "every", es: "cada" },
+  { en: "very", es: "muy" },
+  { en: "too", es: "también" },
+  { en: "also", es: "también" },
+  { en: "and", es: "y" },
+  { en: "or", es: "o" },
+  { en: "but", es: "pero" },
+  { en: "because", es: "porque" },
+  { en: "so", es: "así que" },
+  { en: "if", es: "si" },
+  { en: "then", es: "entonces" },
+  { en: "now", es: "ahora" },
+  { en: "here", es: "aquí" },
+  { en: "there", es: "allí" },
+  { en: "not", es: "no" },
+  { en: "only", es: "solo" },
+  { en: "just", es: "solo" },
+  { en: "still", es: "todavía" },
+  { en: "again", es: "otra vez" },
+  { en: "always", es: "siempre" },
+  { en: "never", es: "nunca" },
+  { en: "sometimes", es: "a veces" },
+  { en: "maybe", es: "quizás" },
+  { en: "perhaps", es: "tal vez" },
+  { en: "one", es: "uno" },
+  { en: "two", es: "dos" },
+  { en: "three", es: "tres" },
+  { en: "four", es: "cuatro" },
+  { en: "five", es: "cinco" },
+  { en: "six", es: "seis" },
+  { en: "seven", es: "siete" },
+  { en: "eight", es: "ocho" },
+  { en: "nine", es: "nueve" },
+  { en: "ten", es: "diez" },
+  { en: "hundred", es: "cien" },
+  { en: "thousand", es: "mil" },
+  { en: "million", es: "millón" },
+  { en: "how are you", es: "cómo estás" },
+  { en: "what is your name", es: "cuál es tu nombre" },
+  { en: "my name is", es: "mi nombre es" },
+  { en: "i don't know", es: "no sé" },
+  { en: "i don't understand", es: "no entiendo" },
+  { en: "i love you", es: "te amo" },
+  { en: "i like you", es: "me gustas" },
+  { en: "i miss you", es: "te extraño" },
+  { en: "where is the bathroom", es: "dónde está el baño" },
+  { en: "how much is it", es: "cuánto cuesta" },
+  { en: "i am hungry", es: "tengo hambre" },
+  { en: "i am thirsty", es: "tengo sed" },
+  { en: "i am tired", es: "estoy cansado" },
+  { en: "see you later", es: "hasta luego" },
+  { en: "what time is it", es: "qué hora es" },
+  // profanity
+  { en: "fuck", es: "joder" },
+  { en: "fucking", es: "jodido" },
+  { en: "shit", es: "mierda" },
+  { en: "bitch", es: "puta" },
+  { en: "ass", es: "culo" },
+  { en: "asshole", es: "cabrón" },
+  { en: "dick", es: "pene" },
+  { en: "pussy", es: "coño" },
+  { en: "cock", es: "verga" },
+  { en: "damn", es: "maldito" },
+  { en: "hell", es: "infierno" },
+  { en: "idiot", es: "idiota" },
+  { en: "stupid", es: "estúpido" },
+  { en: "crazy", es: "loco" },
+  { en: "bastard", es: "bastardo" },
+  { en: "motherfucker", es: "hijo de puta" },
+  { en: "bullshit", es: "tonterías" },
+  { en: "fuck you", es: "vete a la mierda" },
+  { en: "go to hell", es: "vete al infierno" },
+  { en: "shut up", es: "cállate" },
+];
+
+// ---------- EN <-> FR (French) ----------
+const DICT_EN_FR = [
+  { en: "hello", fr: "bonjour" },
+  { en: "hi", fr: "salut" },
+  { en: "good morning", fr: "bonjour" },
+  { en: "good afternoon", fr: "bon après-midi" },
+  { en: "good evening", fr: "bonsoir" },
+  { en: "good night", fr: "bonne nuit" },
+  { en: "goodbye", fr: "au revoir" },
+  { en: "bye", fr: "au revoir" },
+  { en: "please", fr: "s'il vous plaît" },
+  { en: "thank you", fr: "merci" },
+  { en: "thanks", fr: "merci" },
+  { en: "you're welcome", fr: "de rien" },
+  { en: "sorry", fr: "pardon" },
+  { en: "excuse me", fr: "excusez-moi" },
+  { en: "yes", fr: "oui" },
+  { en: "no", fr: "non" },
+  { en: "okay", fr: "d'accord" },
+  { en: "ok", fr: "d'accord" },
+  { en: "i", fr: "je" },
+  { en: "you", fr: "tu" },
+  { en: "he", fr: "il" },
+  { en: "she", fr: "elle" },
+  { en: "it", fr: "il" },
+  { en: "we", fr: "nous" },
+  { en: "they", fr: "ils" },
+  { en: "me", fr: "me" },
+  { en: "my", fr: "mon" },
+  { en: "your", fr: "ton" },
+  { en: "his", fr: "son" },
+  { en: "her", fr: "son" },
+  { en: "our", fr: "notre" },
+  { en: "their", fr: "leur" },
+  { en: "this", fr: "ceci" },
+  { en: "that", fr: "cela" },
+  { en: "what", fr: "quoi" },
+  { en: "where", fr: "où" },
+  { en: "when", fr: "quand" },
+  { en: "why", fr: "pourquoi" },
+  { en: "who", fr: "qui" },
+  { en: "how", fr: "comment" },
+  { en: "how much", fr: "combien" },
+  { en: "how many", fr: "combien" },
+  { en: "which", fr: "quel" },
+  { en: "is", fr: "est" },
+  { en: "are", fr: "sont" },
+  { en: "am", fr: "suis" },
+  { en: "was", fr: "était" },
+  { en: "were", fr: "étaient" },
+  { en: "be", fr: "être" },
+  { en: "have", fr: "avoir" },
+  { en: "has", fr: "a" },
+  { en: "had", fr: "avait" },
+  { en: "do", fr: "faire" },
+  { en: "does", fr: "fait" },
+  { en: "did", fr: "a fait" },
+  { en: "go", fr: "aller" },
+  { en: "goes", fr: "va" },
+  { en: "went", fr: "est allé" },
+  { en: "come", fr: "venir" },
+  { en: "comes", fr: "vient" },
+  { en: "came", fr: "est venu" },
+  { en: "see", fr: "voir" },
+  { en: "saw", fr: "a vu" },
+  { en: "look", fr: "regarder" },
+  { en: "hear", fr: "entendre" },
+  { en: "listen", fr: "écouter" },
+  { en: "say", fr: "dire" },
+  { en: "said", fr: "a dit" },
+  { en: "speak", fr: "parler" },
+  { en: "talk", fr: "parler" },
+  { en: "know", fr: "savoir" },
+  { en: "knew", fr: "savait" },
+  { en: "think", fr: "penser" },
+  { en: "thought", fr: "a pensé" },
+  { en: "want", fr: "vouloir" },
+  { en: "wanted", fr: "voulait" },
+  { en: "need", fr: "avoir besoin" },
+  { en: "like", fr: "aimer" },
+  { en: "liked", fr: "aimait" },
+  { en: "love", fr: "aimer" },
+  { en: "loved", fr: "aimait" },
+  { en: "hate", fr: "détester" },
+  { en: "eat", fr: "manger" },
+  { en: "ate", fr: "a mangé" },
+  { en: "drink", fr: "boire" },
+  { en: "drank", fr: "a bu" },
+  { en: "sleep", fr: "dormir" },
+  { en: "slept", fr: "a dormi" },
+  { en: "work", fr: "travailler" },
+  { en: "worked", fr: "a travaillé" },
+  { en: "play", fr: "jouer" },
+  { en: "played", fr: "a joué" },
+  { en: "buy", fr: "acheter" },
+  { en: "bought", fr: "a acheté" },
+  { en: "sell", fr: "vendre" },
+  { en: "give", fr: "donner" },
+  { en: "gave", fr: "a donné" },
+  { en: "take", fr: "prendre" },
+  { en: "took", fr: "a pris" },
+  { en: "get", fr: "obtenir" },
+  { en: "got", fr: "a obtenu" },
+  { en: "make", fr: "faire" },
+  { en: "made", fr: "a fait" },
+  { en: "use", fr: "utiliser" },
+  { en: "used", fr: "a utilisé" },
+  { en: "help", fr: "aider" },
+  { en: "helped", fr: "a aidé" },
+  { en: "call", fr: "appeler" },
+  { en: "called", fr: "a appelé" },
+  { en: "try", fr: "essayer" },
+  { en: "tried", fr: "a essayé" },
+  { en: "ask", fr: "demander" },
+  { en: "asked", fr: "a demandé" },
+  { en: "answer", fr: "répondre" },
+  { en: "answered", fr: "a répondu" },
+  { en: "find", fr: "trouver" },
+  { en: "found", fr: "a trouvé" },
+  { en: "lose", fr: "perdre" },
+  { en: "lost", fr: "a perdu" },
+  { en: "open", fr: "ouvrir" },
+  { en: "close", fr: "fermer" },
+  { en: "start", fr: "commencer" },
+  { en: "stop", fr: "arrêter" },
+  { en: "begin", fr: "commencer" },
+  { en: "end", fr: "finir" },
+  { en: "finish", fr: "finir" },
+  { en: "live", fr: "vivre" },
+  { en: "lived", fr: "a vécu" },
+  { en: "die", fr: "mourir" },
+  { en: "died", fr: "est mort" },
+  { en: "kill", fr: "tuer" },
+  { en: "killed", fr: "a tué" },
+  { en: "run", fr: "courir" },
+  { en: "ran", fr: "a couru" },
+  { en: "walk", fr: "marcher" },
+  { en: "walked", fr: "a marché" },
+  { en: "drive", fr: "conduire" },
+  { en: "drove", fr: "a conduit" },
+  { en: "fly", fr: "voler" },
+  { en: "flew", fr: "a volé" },
+  { en: "read", fr: "lire" },
+  { en: "write", fr: "écrire" },
+  { en: "wrote", fr: "a écrit" },
+  { en: "learn", fr: "apprendre" },
+  { en: "teach", fr: "enseigner" },
+  { en: "understand", fr: "comprendre" },
+  { en: "understood", fr: "a compris" },
+  { en: "remember", fr: "se souvenir" },
+  { en: "forget", fr: "oublier" },
+  { en: "believe", fr: "croire" },
+  { en: "feel", fr: "sentir" },
+  { en: "felt", fr: "a senti" },
+  { en: "man", fr: "homme" },
+  { en: "woman", fr: "femme" },
+  { en: "boy", fr: "garçon" },
+  { en: "girl", fr: "fille" },
+  { en: "child", fr: "enfant" },
+  { en: "children", fr: "enfants" },
+  { en: "baby", fr: "bébé" },
+  { en: "father", fr: "père" },
+  { en: "mother", fr: "mère" },
+  { en: "dad", fr: "papa" },
+  { en: "mom", fr: "maman" },
+  { en: "son", fr: "fils" },
+  { en: "daughter", fr: "fille" },
+  { en: "brother", fr: "frère" },
+  { en: "sister", fr: "sœur" },
+  { en: "friend", fr: "ami" },
+  { en: "friends", fr: "amis" },
+  { en: "family", fr: "famille" },
+  { en: "people", fr: "gens" },
+  { en: "person", fr: "personne" },
+  { en: "name", fr: "nom" },
+  { en: "house", fr: "maison" },
+  { en: "home", fr: "maison" },
+  { en: "room", fr: "chambre" },
+  { en: "door", fr: "porte" },
+  { en: "window", fr: "fenêtre" },
+  { en: "school", fr: "école" },
+  { en: "work", fr: "travail" },
+  { en: "job", fr: "travail" },
+  { en: "car", fr: "voiture" },
+  { en: "bus", fr: "bus" },
+  { en: "train", fr: "train" },
+  { en: "plane", fr: "avion" },
+  { en: "boat", fr: "bateau" },
+  { en: "road", fr: "route" },
+  { en: "street", fr: "rue" },
+  { en: "city", fr: "ville" },
+  { en: "country", fr: "pays" },
+  { en: "world", fr: "monde" },
+  { en: "water", fr: "eau" },
+  { en: "fire", fr: "feu" },
+  { en: "air", fr: "air" },
+  { en: "earth", fr: "terre" },
+  { en: "sun", fr: "soleil" },
+  { en: "moon", fr: "lune" },
+  { en: "star", fr: "étoile" },
+  { en: "sky", fr: "ciel" },
+  { en: "rain", fr: "pluie" },
+  { en: "snow", fr: "neige" },
+  { en: "wind", fr: "vent" },
+  { en: "tree", fr: "arbre" },
+  { en: "flower", fr: "fleur" },
+  { en: "animal", fr: "animal" },
+  { en: "dog", fr: "chien" },
+  { en: "cat", fr: "chat" },
+  { en: "fish", fr: "poisson" },
+  { en: "bird", fr: "oiseau" },
+  { en: "horse", fr: "cheval" },
+  { en: "food", fr: "nourriture" },
+  { en: "rice", fr: "riz" },
+  { en: "bread", fr: "pain" },
+  { en: "meat", fr: "viande" },
+  { en: "chicken", fr: "poulet" },
+  { en: "egg", fr: "œuf" },
+  { en: "milk", fr: "lait" },
+  { en: "tea", fr: "thé" },
+  { en: "coffee", fr: "café" },
+  { en: "beer", fr: "bière" },
+  { en: "wine", fr: "vin" },
+  { en: "money", fr: "argent" },
+  { en: "book", fr: "livre" },
+  { en: "phone", fr: "téléphone" },
+  { en: "computer", fr: "ordinateur" },
+  { en: "table", fr: "table" },
+  { en: "chair", fr: "chaise" },
+  { en: "bed", fr: "lit" },
+  { en: "time", fr: "temps" },
+  { en: "day", fr: "jour" },
+  { en: "night", fr: "nuit" },
+  { en: "week", fr: "semaine" },
+  { en: "month", fr: "mois" },
+  { en: "year", fr: "année" },
+  { en: "today", fr: "aujourd'hui" },
+  { en: "tomorrow", fr: "demain" },
+  { en: "yesterday", fr: "hier" },
+  { en: "morning", fr: "matin" },
+  { en: "afternoon", fr: "après-midi" },
+  { en: "evening", fr: "soir" },
+  { en: "love", fr: "amour" },
+  { en: "life", fr: "vie" },
+  { en: "death", fr: "mort" },
+  { en: "war", fr: "guerre" },
+  { en: "peace", fr: "paix" },
+  { en: "god", fr: "dieu" },
+  { en: "good", fr: "bon" },
+  { en: "bad", fr: "mauvais" },
+  { en: "big", fr: "grand" },
+  { en: "small", fr: "petit" },
+  { en: "new", fr: "nouveau" },
+  { en: "old", fr: "vieux" },
+  { en: "hot", fr: "chaud" },
+  { en: "cold", fr: "froid" },
+  { en: "fast", fr: "rapide" },
+  { en: "slow", fr: "lent" },
+  { en: "happy", fr: "heureux" },
+  { en: "sad", fr: "triste" },
+  { en: "angry", fr: "en colère" },
+  { en: "tired", fr: "fatigué" },
+  { en: "sick", fr: "malade" },
+  { en: "beautiful", fr: "beau" },
+  { en: "ugly", fr: "laid" },
+  { en: "rich", fr: "riche" },
+  { en: "poor", fr: "pauvre" },
+  { en: "strong", fr: "fort" },
+  { en: "weak", fr: "faible" },
+  { en: "young", fr: "jeune" },
+  { en: "easy", fr: "facile" },
+  { en: "hard", fr: "difficile" },
+  { en: "right", fr: "correct" },
+  { en: "wrong", fr: "faux" },
+  { en: "true", fr: "vrai" },
+  { en: "false", fr: "faux" },
+  { en: "same", fr: "même" },
+  { en: "different", fr: "différent" },
+  { en: "many", fr: "beaucoup" },
+  { en: "much", fr: "beaucoup" },
+  { en: "more", fr: "plus" },
+  { en: "most", fr: "la plupart" },
+  { en: "little", fr: "peu" },
+  { en: "few", fr: "peu" },
+  { en: "less", fr: "moins" },
+  { en: "all", fr: "tout" },
+  { en: "some", fr: "quelques" },
+  { en: "no", fr: "aucun" },
+  { en: "every", fr: "chaque" },
+  { en: "very", fr: "très" },
+  { en: "too", fr: "trop" },
+  { en: "also", fr: "aussi" },
+  { en: "and", fr: "et" },
+  { en: "or", fr: "ou" },
+  { en: "but", fr: "mais" },
+  { en: "because", fr: "parce que" },
+  { en: "so", fr: "donc" },
+  { en: "if", fr: "si" },
+  { en: "then", fr: "alors" },
+  { en: "now", fr: "maintenant" },
+  { en: "here", fr: "ici" },
+  { en: "there", fr: "là" },
+  { en: "not", fr: "ne pas" },
+  { en: "only", fr: "seulement" },
+  { en: "just", fr: "juste" },
+  { en: "still", fr: "encore" },
+  { en: "again", fr: "encore" },
+  { en: "always", fr: "toujours" },
+  { en: "never", fr: "jamais" },
+  { en: "sometimes", fr: "parfois" },
+  { en: "maybe", fr: "peut-être" },
+  { en: "perhaps", fr: "peut-être" },
+  { en: "one", fr: "un" },
+  { en: "two", fr: "deux" },
+  { en: "three", fr: "trois" },
+  { en: "four", fr: "quatre" },
+  { en: "five", fr: "cinq" },
+  { en: "six", fr: "six" },
+  { en: "seven", fr: "sept" },
+  { en: "eight", fr: "huit" },
+  { en: "nine", fr: "neuf" },
+  { en: "ten", fr: "dix" },
+  { en: "hundred", fr: "cent" },
+  { en: "thousand", fr: "mille" },
+  { en: "million", fr: "million" },
+  { en: "how are you", fr: "comment allez-vous" },
+  { en: "what is your name", fr: "comment tu t'appelles" },
+  { en: "my name is", fr: "je m'appelle" },
+  { en: "i don't know", fr: "je ne sais pas" },
+  { en: "i don't understand", fr: "je ne comprends pas" },
+  { en: "i love you", fr: "je t'aime" },
+  { en: "i like you", fr: "tu me plais" },
+  { en: "i miss you", fr: "tu me manques" },
+  { en: "where is the bathroom", fr: "où sont les toilettes" },
+  { en: "how much is it", fr: "combien ça coûte" },
+  { en: "i am hungry", fr: "j'ai faim" },
+  { en: "i am thirsty", fr: "j'ai soif" },
+  { en: "i am tired", fr: "je suis fatigué" },
+  { en: "see you later", fr: "à plus tard" },
+  { en: "what time is it", fr: "quelle heure est-il" },
+  // profanity
+  { en: "fuck", fr: "baiser" },
+  { en: "fucking", fr: "putain" },
+  { en: "shit", fr: "merde" },
+  { en: "bitch", fr: "salope" },
+  { en: "ass", fr: "cul" },
+  { en: "asshole", fr: "connard" },
+  { en: "dick", fr: "bite" },
+  { en: "pussy", fr: "chatte" },
+  { en: "cock", fr: "bite" },
+  { en: "damn", fr: "zut" },
+  { en: "hell", fr: "enfer" },
+  { en: "idiot", fr: "idiot" },
+  { en: "stupid", fr: "stupide" },
+  { en: "crazy", fr: "fou" },
+  { en: "bastard", fr: "bâtard" },
+  { en: "motherfucker", fr: "enculé" },
+  { en: "bullshit", fr: "conneries" },
+  { en: "fuck you", fr: "va te faire foutre" },
+  { en: "go to hell", fr: "va au diable" },
+  { en: "shut up", fr: "ta gueule" },
+];
+
+;
+// ---------- EN <-> AR (Arabic) ----------
+const DICT_EN_AR = [
+  { en: "hello", ar: "مرحبا" },
+  { en: "hi", ar: "أهلا" },
+  { en: "good morning", ar: "صباح الخير" },
+  { en: "good evening", ar: "مساء الخير" },
+  { en: "good night", ar: "تصبح على خير" },
+  { en: "goodbye", ar: "وداعا" },
+  { en: "bye", ar: "مع السلامة" },
+  { en: "please", ar: "من فضلك" },
+  { en: "thank you", ar: "شكرا" },
+  { en: "thanks", ar: "شكرا" },
+  { en: "you're welcome", ar: "عفوا" },
+  { en: "sorry", ar: "آسف" },
+  { en: "excuse me", ar: "عفوا" },
+  { en: "yes", ar: "نعم" },
+  { en: "no", ar: "لا" },
+  { en: "okay", ar: "حسنا" },
+  { en: "ok", ar: "حسنا" },
+  { en: "i", ar: "أنا" },
+  { en: "you", ar: "أنت" },
+  { en: "he", ar: "هو" },
+  { en: "she", ar: "هي" },
+  { en: "we", ar: "نحن" },
+  { en: "they", ar: "هم" },
+  { en: "me", ar: "إياي" },
+  { en: "my", ar: "ملكي" },
+  { en: "your", ar: "ملكك" },
+  { en: "what", ar: "ماذا" },
+  { en: "where", ar: "أين" },
+  { en: "when", ar: "متى" },
+  { en: "why", ar: "لماذا" },
+  { en: "who", ar: "من" },
+  { en: "how", ar: "كيف" },
+  { en: "how much", ar: "كم" },
+  { en: "how many", ar: "كم" },
+  { en: "which", ar: "أي" },
+  { en: "is", ar: "هو" },
+  { en: "are", ar: "هم" },
+  { en: "am", ar: "أنا" },
+  { en: "have", ar: "لدي" },
+  { en: "has", ar: "لديه" },
+  { en: "do", ar: "افعل" },
+  { en: "does", ar: "يفعل" },
+  { en: "go", ar: "اذهب" },
+  { en: "come", ar: "تعال" },
+  { en: "see", ar: "انظر" },
+  { en: "look", ar: "انظر" },
+  { en: "hear", ar: "اسمع" },
+  { en: "listen", ar: "استمع" },
+  { en: "say", ar: "قل" },
+  { en: "speak", ar: "تكلم" },
+  { en: "talk", ar: "تحدث" },
+  { en: "know", ar: "أعرف" },
+  { en: "think", ar: "أفكر" },
+  { en: "want", ar: "أريد" },
+  { en: "need", ar: "أحتاج" },
+  { en: "like", ar: "أحب" },
+  { en: "love", ar: "أحب" },
+  { en: "hate", ar: "أكره" },
+  { en: "eat", ar: "كل" },
+  { en: "drink", ar: "اشرب" },
+  { en: "sleep", ar: "نم" },
+  { en: "work", ar: "عمل" },
+  { en: "play", ar: "العب" },
+  { en: "buy", ar: "اشتر" },
+  { en: "sell", ar: "بع" },
+  { en: "give", ar: "أعط" },
+  { en: "take", ar: "خذ" },
+  { en: "make", ar: "اصنع" },
+  { en: "help", ar: "ساعد" },
+  { en: "ask", ar: "اسأل" },
+  { en: "answer", ar: "أجب" },
+  { en: "find", ar: "جد" },
+  { en: "open", ar: "افتح" },
+  { en: "close", ar: "أغلق" },
+  { en: "start", ar: "ابدأ" },
+  { en: "stop", ar: "توقف" },
+  { en: "live", ar: "اعيش" },
+  { en: "die", ar: "مت" },
+  { en: "kill", ar: "اقتل" },
+  { en: "run", ar: "اركض" },
+  { en: "walk", ar: "امش" },
+  { en: "read", ar: "اقرأ" },
+  { en: "write", ar: "اكتب" },
+  { en: "learn", ar: "تعلم" },
+  { en: "teach", ar: "علم" },
+  { en: "understand", ar: "أفهم" },
+  { en: "remember", ar: "تذكر" },
+  { en: "forget", ar: "انس" },
+  { en: "believe", ar: "أؤمن" },
+  { en: "feel", ar: "أشعر" },
+  { en: "man", ar: "رجل" },
+  { en: "woman", ar: "امرأة" },
+  { en: "boy", ar: "ولد" },
+  { en: "girl", ar: "بنت" },
+  { en: "child", ar: "طفل" },
+  { en: "children", ar: "أطفال" },
+  { en: "baby", ar: "رضيع" },
+  { en: "father", ar: "أب" },
+  { en: "mother", ar: "أم" },
+  { en: "son", ar: "ابن" },
+  { en: "daughter", ar: "ابنة" },
+  { en: "brother", ar: "أخ" },
+  { en: "sister", ar: "أخت" },
+  { en: "friend", ar: "صديق" },
+  { en: "friends", ar: "أصدقاء" },
+  { en: "family", ar: "عائلة" },
+  { en: "people", ar: "ناس" },
+  { en: "name", ar: "اسم" },
+  { en: "house", ar: "بيت" },
+  { en: "home", ar: "بيت" },
+  { en: "water", ar: "ماء" },
+  { en: "fire", ar: "نار" },
+  { en: "sun", ar: "شمس" },
+  { en: "moon", ar: "قمر" },
+  { en: "sky", ar: "سماء" },
+  { en: "rain", ar: "مطر" },
+  { en: "food", ar: "طعام" },
+  { en: "bread", ar: "خبز" },
+  { en: "meat", ar: "لحم" },
+  { en: "milk", ar: "حليب" },
+  { en: "tea", ar: "شاي" },
+  { en: "coffee", ar: "قهوة" },
+  { en: "money", ar: "مال" },
+  { en: "book", ar: "كتاب" },
+  { en: "car", ar: "سيارة" },
+  { en: "time", ar: "وقت" },
+  { en: "day", ar: "يوم" },
+  { en: "night", ar: "ليل" },
+  { en: "year", ar: "سنة" },
+  { en: "today", ar: "اليوم" },
+  { en: "tomorrow", ar: "غدا" },
+  { en: "yesterday", ar: "أمس" },
+  { en: "good", ar: "جيد" },
+  { en: "bad", ar: "سيئ" },
+  { en: "big", ar: "كبير" },
+  { en: "small", ar: "صغير" },
+  { en: "new", ar: "جديد" },
+  { en: "old", ar: "قديم" },
+  { en: "hot", ar: "حار" },
+  { en: "cold", ar: "بارد" },
+  { en: "fast", ar: "سريع" },
+  { en: "happy", ar: "سعيد" },
+  { en: "sad", ar: "حزين" },
+  { en: "angry", ar: "غاضب" },
+  { en: "tired", ar: "متعب" },
+  { en: "beautiful", ar: "جميل" },
+  { en: "ugly", ar: "قبيح" },
+  { en: "rich", ar: "غني" },
+  { en: "poor", ar: "فقير" },
+  { en: "strong", ar: "قوي" },
+  { en: "weak", ar: "ضعيف" },
+  { en: "easy", ar: "سهل" },
+  { en: "hard", ar: "صعب" },
+  { en: "right", ar: "صحيح" },
+  { en: "wrong", ar: "خطأ" },
+  { en: "true", ar: "صحيح" },
+  { en: "false", ar: "خاطئ" },
+  { en: "many", ar: "كثير" },
+  { en: "more", ar: "أكثر" },
+  { en: "all", ar: "الكل" },
+  { en: "some", ar: "بعض" },
+  { en: "very", ar: "جدا" },
+  { en: "and", ar: "و" },
+  { en: "or", ar: "أو" },
+  { en: "but", ar: "لكن" },
+  { en: "because", ar: "لأن" },
+  { en: "so", ar: "لذلك" },
+  { en: "if", ar: "إذا" },
+  { en: "now", ar: "الآن" },
+  { en: "here", ar: "هنا" },
+  { en: "there", ar: "هناك" },
+  { en: "not", ar: "ليس" },
+  { en: "only", ar: "فقط" },
+  { en: "again", ar: "مرة أخرى" },
+  { en: "always", ar: "دائما" },
+  { en: "never", ar: "أبدا" },
+  { en: "maybe", ar: "ربما" },
+  { en: "one", ar: "واحد" },
+  { en: "two", ar: "اثنان" },
+  { en: "three", ar: "ثلاثة" },
+  { en: "four", ar: "أربعة" },
+  { en: "five", ar: "خمسة" },
+  { en: "six", ar: "ستة" },
+  { en: "seven", ar: "سبعة" },
+  { en: "eight", ar: "ثمانية" },
+  { en: "nine", ar: "تسعة" },
+  { en: "ten", ar: "عشرة" },
+  { en: "how are you", ar: "كيف حالك" },
+  { en: "what is your name", ar: "ما اسمك" },
+  { en: "my name is", ar: "اسمي" },
+  { en: "i don't know", ar: "لا أعرف" },
+  { en: "i love you", ar: "أحبك" },
+  { en: "i am hungry", ar: "أنا جائع" },
+  { en: "i am tired", ar: "أنا متعب" },
+  { en: "see you later", ar: "أراك لاحقا" },
+  // profanity
+  { en: "fuck", ar: "نيك" },
+  { en: "fucking", ar: "لعين" },
+  { en: "shit", ar: "خرى" },
+  { en: "bitch", ar: "عاهرة" },
+  { en: "asshole", ar: "متأنث" },
+  { en: "damn", ar: "تبا" },
+  { en: "idiot", ar: "أحمق" },
+  { en: "stupid", ar: "غبي" },
+  { en: "crazy", ar: "مجنون" },
+  { en: "bastard", ar: "لقيط" },
+  { en: "bullshit", ar: "هراء" },
+  { en: "fuck you", ar: "ينيكك" },
+  { en: "shut up", ar: "اسكت" },
+];
+
+// ---------- EN <-> BN (Bengali) ----------
+const DICT_EN_BN = [
+  { en: "hello", bn: "হ্যালো" },
+  { en: "hi", bn: "হ্যালো" },
+  { en: "good morning", bn: "সুপ্রভাত" },
+  { en: "good evening", bn: "শুভ সন্ধ্যা" },
+  { en: "good night", bn: "শুভ রাত্রি" },
+  { en: "goodbye", bn: "বিদায়" },
+  { en: "bye", bn: "বিদায়" },
+  { en: "please", bn: "অনুগ্রহ করে" },
+  { en: "thank you", bn: "ধন্যবাদ" },
+  { en: "thanks", bn: "ধন্যবাদ" },
+  { en: "sorry", bn: "দুঃখিত" },
+  { en: "yes", bn: "হ্যাঁ" },
+  { en: "no", bn: "না" },
+  { en: "okay", bn: "ঠিক আছে" },
+  { en: "ok", bn: "ঠিক আছে" },
+  { en: "i", bn: "আমি" },
+  { en: "you", bn: "তুমি" },
+  { en: "he", bn: "সে" },
+  { en: "she", bn: "সে" },
+  { en: "we", bn: "আমরা" },
+  { en: "they", bn: "তারা" },
+  { en: "my", bn: "আমার" },
+  { en: "your", bn: "তোমার" },
+  { en: "what", bn: "কী" },
+  { en: "where", bn: "কোথায়" },
+  { en: "when", bn: "কখন" },
+  { en: "why", bn: "কেন" },
+  { en: "who", bn: "কে" },
+  { en: "how", bn: "কীভাবে" },
+  { en: "how much", bn: "কত" },
+  { en: "is", bn: "হয়" },
+  { en: "are", bn: "হয়" },
+  { en: "am", bn: "আমি" },
+  { en: "have", bn: "আছে" },
+  { en: "has", bn: "আছে" },
+  { en: "do", bn: "করো" },
+  { en: "go", bn: "যাও" },
+  { en: "come", bn: "এসো" },
+  { en: "see", bn: "দেখো" },
+  { en: "look", bn: "দেখো" },
+  { en: "say", bn: "বলো" },
+  { en: "speak", bn: "কথা বলো" },
+  { en: "know", bn: "জানো" },
+  { en: "think", bn: "ভাবো" },
+  { en: "want", bn: "চাও" },
+  { en: "need", bn: "প্রয়োজন" },
+  { en: "like", bn: "পছন্দ" },
+  { en: "love", bn: "ভালোবাসা" },
+  { en: "eat", bn: "খাও" },
+  { en: "drink", bn: "পান করো" },
+  { en: "sleep", bn: "ঘুমাও" },
+  { en: "work", bn: "কাজ" },
+  { en: "play", bn: "খেলো" },
+  { en: "buy", bn: "কিনো" },
+  { en: "give", bn: "দাও" },
+  { en: "take", bn: "নাও" },
+  { en: "make", bn: "বানাও" },
+  { en: "help", bn: "সাহায্য" },
+  { en: "ask", bn: "জিজ্ঞাসো" },
+  { en: "answer", bn: "উত্তর" },
+  { en: "find", bn: "খোঁজো" },
+  { en: "open", bn: "খোলো" },
+  { en: "close", bn: "বন্ধ করো" },
+  { en: "man", bn: "মানুষ" },
+  { en: "woman", bn: "মহিলা" },
+  { en: "boy", bn: "ছেলে" },
+  { en: "girl", bn: "মেয়ে" },
+  { en: "child", bn: "শিশু" },
+  { en: "father", bn: "বাবা" },
+  { en: "mother", bn: "মা" },
+  { en: "son", bn: "ছেলে" },
+  { en: "daughter", bn: "মেয়ে" },
+  { en: "friend", bn: "বন্ধু" },
+  { en: "family", bn: "পরিবার" },
+  { en: "name", bn: "নাম" },
+  { en: "house", bn: "বাড়ি" },
+  { en: "home", bn: "বাড়ি" },
+  { en: "water", bn: "জল" },
+  { en: "fire", bn: "আগুন" },
+  { en: "sun", bn: "সূর্য" },
+  { en: "moon", bn: "চাঁদ" },
+  { en: "sky", bn: "আকাশ" },
+  { en: "rain", bn: "বৃষ্টি" },
+  { en: "food", bn: "খাবার" },
+  { en: "rice", bn: "ভাত" },
+  { en: "bread", bn: "রুটি" },
+  { en: "milk", bn: "দুধ" },
+  { en: "tea", bn: "চা" },
+  { en: "money", bn: "টাকা" },
+  { en: "book", bn: "বই" },
+  { en: "car", bn: "গাড়ি" },
+  { en: "time", bn: "সময়" },
+  { en: "day", bn: "দিন" },
+  { en: "night", bn: "রাত" },
+  { en: "year", bn: "বছর" },
+  { en: "today", bn: "আজ" },
+  { en: "tomorrow", bn: "আগামীকাল" },
+  { en: "yesterday", bn: "গতকাল" },
+  { en: "good", bn: "ভালো" },
+  { en: "bad", bn: "খারাপ" },
+  { en: "big", bn: "বড়" },
+  { en: "small", bn: "ছোট" },
+  { en: "new", bn: "নতুন" },
+  { en: "old", bn: "পুরোনো" },
+  { en: "hot", bn: "গরম" },
+  { en: "cold", bn: "ঠান্ডা" },
+  { en: "fast", bn: "দ্রুত" },
+  { en: "happy", bn: "খুশি" },
+  { en: "sad", bn: "দুঃখিত" },
+  { en: "angry", bn: "রাগ" },
+  { en: "tired", bn: "ক্লান্ত" },
+  { en: "beautiful", bn: "সুন্দর" },
+  { en: "rich", bn: "ধনী" },
+  { en: "poor", bn: "গরিব" },
+  { en: "easy", bn: "সহজ" },
+  { en: "hard", bn: "কঠিন" },
+  { en: "right", bn: "সঠিক" },
+  { en: "wrong", bn: "ভুল" },
+  { en: "true", bn: "সত্য" },
+  { en: "false", bn: "মিথ্যা" },
+  { en: "very", bn: "খুব" },
+  { en: "and", bn: "এবং" },
+  { en: "or", bn: "বা" },
+  { en: "but", bn: "কিন্তু" },
+  { en: "because", bn: "কারণ" },
+  { en: "so", bn: "তাই" },
+  { en: "if", bn: "যদি" },
+  { en: "now", bn: "এখন" },
+  { en: "here", bn: "এখানে" },
+  { en: "there", bn: "সেখানে" },
+  { en: "not", bn: "না" },
+  { en: "only", bn: "শুধু" },
+  { en: "always", bn: "সবসময়" },
+  { en: "never", bn: "কখনও না" },
+  { en: "maybe", bn: "হয়তো" },
+  { en: "one", bn: "এক" },
+  { en: "two", bn: "দুই" },
+  { en: "three", bn: "তিন" },
+  { en: "four", bn: "চার" },
+  { en: "five", bn: "পাঁচ" },
+  { en: "six", bn: "ছয়" },
+  { en: "seven", bn: "সাত" },
+  { en: "eight", bn: "আট" },
+  { en: "nine", bn: "নয়" },
+  { en: "ten", bn: "দশ" },
+  { en: "how are you", bn: "তুমি কেমন আছো" },
+  { en: "what is your name", bn: "তোমার নাম কী" },
+  { en: "my name is", bn: "আমার নাম" },
+  { en: "i don't know", bn: "আমি জানি না" },
+  { en: "i love you", bn: "আমি তোমাকে ভালোবাসি" },
+  { en: "i am hungry", bn: "আমার খিদে লেগেছে" },
+  { en: "see you later", bn: "পরে দেখা হবে" },
+  // profanity
+  { en: "fuck", bn: "চোদ" },
+  { en: "shit", bn: "বকবাস" },
+  { en: "bitch", bn: "রান্ডি" },
+  { en: "asshole", bn: "যাচাই" },
+  { en: "damn", bn: "অভিশাপ" },
+  { en: "idiot", bn: "বোকা" },
+  { en: "stupid", bn: "বোকা" },
+  { en: "crazy", bn: "পাগল" },
+  { en: "bastard", bn: "হারামি" },
+  { en: "bullshit", bn: "বকবাস" },
+  { en: "shut up", bn: "চুপ করো" },
+];
+
+// ---------- EN <-> PT (Portuguese) ----------
+const DICT_EN_PT = [
+  { en: "hello", pt: "olá" },
+  { en: "hi", pt: "oi" },
+  { en: "good morning", pt: "bom dia" },
+  { en: "good afternoon", pt: "boa tarde" },
+  { en: "good evening", pt: "boa noite" },
+  { en: "good night", pt: "boa noite" },
+  { en: "goodbye", pt: "adeus" },
+  { en: "bye", pt: "tchau" },
+  { en: "please", pt: "por favor" },
+  { en: "thank you", pt: "obrigado" },
+  { en: "thanks", pt: "obrigado" },
+  { en: "you're welcome", pt: "de nada" },
+  { en: "sorry", pt: "desculpa" },
+  { en: "excuse me", pt: "com licença" },
+  { en: "yes", pt: "sim" },
+  { en: "no", pt: "não" },
+  { en: "okay", pt: "ok" },
+  { en: "ok", pt: "ok" },
+  { en: "i", pt: "eu" },
+  { en: "you", pt: "você" },
+  { en: "he", pt: "ele" },
+  { en: "she", pt: "ela" },
+  { en: "it", pt: "isso" },
+  { en: "we", pt: "nós" },
+  { en: "they", pt: "eles" },
+  { en: "me", pt: "me" },
+  { en: "my", pt: "meu" },
+  { en: "your", pt: "seu" },
+  { en: "his", pt: "seu" },
+  { en: "her", pt: "sua" },
+  { en: "our", pt: "nosso" },
+  { en: "their", pt: "seu" },
+  { en: "this", pt: "isto" },
+  { en: "that", pt: "isso" },
+  { en: "what", pt: "o que" },
+  { en: "where", pt: "onde" },
+  { en: "when", pt: "quando" },
+  { en: "why", pt: "por que" },
+  { en: "who", pt: "quem" },
+  { en: "how", pt: "como" },
+  { en: "how much", pt: "quanto" },
+  { en: "how many", pt: "quantos" },
+  { en: "which", pt: "qual" },
+  { en: "is", pt: "é" },
+  { en: "are", pt: "são" },
+  { en: "am", pt: "sou" },
+  { en: "was", pt: "era" },
+  { en: "were", pt: "eram" },
+  { en: "be", pt: "ser" },
+  { en: "have", pt: "ter" },
+  { en: "has", pt: "tem" },
+  { en: "had", pt: "tinha" },
+  { en: "do", pt: "fazer" },
+  { en: "does", pt: "faz" },
+  { en: "did", pt: "fez" },
+  { en: "go", pt: "ir" },
+  { en: "goes", pt: "vai" },
+  { en: "went", pt: "foi" },
+  { en: "come", pt: "vir" },
+  { en: "comes", pt: "vem" },
+  { en: "came", pt: "veio" },
+  { en: "see", pt: "ver" },
+  { en: "saw", pt: "viu" },
+  { en: "look", pt: "olhar" },
+  { en: "hear", pt: "ouvir" },
+  { en: "listen", pt: "escutar" },
+  { en: "say", pt: "dizer" },
+  { en: "said", pt: "disse" },
+  { en: "speak", pt: "falar" },
+  { en: "talk", pt: "falar" },
+  { en: "know", pt: "saber" },
+  { en: "knew", pt: "sabia" },
+  { en: "think", pt: "pensar" },
+  { en: "thought", pt: "pensou" },
+  { en: "want", pt: "querer" },
+  { en: "wanted", pt: "queria" },
+  { en: "need", pt: "precisar" },
+  { en: "like", pt: "gostar" },
+  { en: "liked", pt: "gostava" },
+  { en: "love", pt: "amar" },
+  { en: "loved", pt: "amou" },
+  { en: "hate", pt: "odiar" },
+  { en: "eat", pt: "comer" },
+  { en: "ate", pt: "comeu" },
+  { en: "drink", pt: "beber" },
+  { en: "drank", pt: "bebeu" },
+  { en: "sleep", pt: "dormir" },
+  { en: "slept", pt: "dormiu" },
+  { en: "work", pt: "trabalhar" },
+  { en: "worked", pt: "trabalhou" },
+  { en: "play", pt: "jogar" },
+  { en: "played", pt: "jogou" },
+  { en: "buy", pt: "comprar" },
+  { en: "bought", pt: "comprou" },
+  { en: "sell", pt: "vender" },
+  { en: "give", pt: "dar" },
+  { en: "gave", pt: "deu" },
+  { en: "take", pt: "tomar" },
+  { en: "took", pt: "tomou" },
+  { en: "get", pt: "conseguir" },
+  { en: "got", pt: "conseguiu" },
+  { en: "make", pt: "fazer" },
+  { en: "made", pt: "fez" },
+  { en: "use", pt: "usar" },
+  { en: "used", pt: "usou" },
+  { en: "help", pt: "ajudar" },
+  { en: "helped", pt: "ajudou" },
+  { en: "call", pt: "chamar" },
+  { en: "called", pt: "chamou" },
+  { en: "try", pt: "tentar" },
+  { en: "tried", pt: "tentou" },
+  { en: "ask", pt: "perguntar" },
+  { en: "asked", pt: "perguntou" },
+  { en: "answer", pt: "responder" },
+  { en: "answered", pt: "respondeu" },
+  { en: "find", pt: "encontrar" },
+  { en: "found", pt: "encontrou" },
+  { en: "lose", pt: "perder" },
+  { en: "lost", pt: "perdeu" },
+  { en: "open", pt: "abrir" },
+  { en: "close", pt: "fechar" },
+  { en: "start", pt: "começar" },
+  { en: "stop", pt: "parar" },
+  { en: "begin", pt: "começar" },
+  { en: "end", pt: "terminar" },
+  { en: "finish", pt: "terminar" },
+  { en: "live", pt: "viver" },
+  { en: "lived", pt: "viveu" },
+  { en: "die", pt: "morrer" },
+  { en: "died", pt: "morreu" },
+  { en: "kill", pt: "matar" },
+  { en: "killed", pt: "matou" },
+  { en: "run", pt: "correr" },
+  { en: "ran", pt: "correu" },
+  { en: "walk", pt: "caminhar" },
+  { en: "walked", pt: "caminhou" },
+  { en: "drive", pt: "dirigir" },
+  { en: "drove", pt: "dirigiu" },
+  { en: "fly", pt: "voar" },
+  { en: "flew", pt: "voou" },
+  { en: "read", pt: "ler" },
+  { en: "write", pt: "escrever" },
+  { en: "wrote", pt: "escreveu" },
+  { en: "learn", pt: "aprender" },
+  { en: "teach", pt: "ensinar" },
+  { en: "understand", pt: "entender" },
+  { en: "understood", pt: "entendeu" },
+  { en: "remember", pt: "lembrar" },
+  { en: "forget", pt: "esquecer" },
+  { en: "believe", pt: "acreditar" },
+  { en: "feel", pt: "sentir" },
+  { en: "felt", pt: "sentiu" },
+  { en: "man", pt: "homem" },
+  { en: "woman", pt: "mulher" },
+  { en: "boy", pt: "menino" },
+  { en: "girl", pt: "menina" },
+  { en: "child", pt: "criança" },
+  { en: "children", pt: "crianças" },
+  { en: "baby", pt: "bebê" },
+  { en: "father", pt: "pai" },
+  { en: "mother", pt: "mãe" },
+  { en: "dad", pt: "papai" },
+  { en: "mom", pt: "mamãe" },
+  { en: "son", pt: "filho" },
+  { en: "daughter", pt: "filha" },
+  { en: "brother", pt: "irmão" },
+  { en: "sister", pt: "irmã" },
+  { en: "friend", pt: "amigo" },
+  { en: "friends", pt: "amigos" },
+  { en: "family", pt: "família" },
+  { en: "people", pt: "pessoas" },
+  { en: "person", pt: "pessoa" },
+  { en: "name", pt: "nome" },
+  { en: "house", pt: "casa" },
+  { en: "home", pt: "casa" },
+  { en: "room", pt: "quarto" },
+  { en: "door", pt: "porta" },
+  { en: "window", pt: "janela" },
+  { en: "school", pt: "escola" },
+  { en: "work", pt: "trabalho" },
+  { en: "job", pt: "trabalho" },
+  { en: "car", pt: "carro" },
+  { en: "bus", pt: "ônibus" },
+  { en: "train", pt: "trem" },
+  { en: "plane", pt: "avião" },
+  { en: "boat", pt: "barco" },
+  { en: "road", pt: "estrada" },
+  { en: "street", pt: "rua" },
+  { en: "city", pt: "cidade" },
+  { en: "country", pt: "país" },
+  { en: "world", pt: "mundo" },
+  { en: "water", pt: "água" },
+  { en: "fire", pt: "fogo" },
+  { en: "air", pt: "ar" },
+  { en: "earth", pt: "terra" },
+  { en: "sun", pt: "sol" },
+  { en: "moon", pt: "lua" },
+  { en: "star", pt: "estrela" },
+  { en: "sky", pt: "céu" },
+  { en: "rain", pt: "chuva" },
+  { en: "snow", pt: "neve" },
+  { en: "wind", pt: "vento" },
+  { en: "tree", pt: "árvore" },
+  { en: "flower", pt: "flor" },
+  { en: "animal", pt: "animal" },
+  { en: "dog", pt: "cachorro" },
+  { en: "cat", pt: "gato" },
+  { en: "fish", pt: "peixe" },
+  { en: "bird", pt: "pássaro" },
+  { en: "horse", pt: "cavalo" },
+  { en: "food", pt: "comida" },
+  { en: "rice", pt: "arroz" },
+  { en: "bread", pt: "pão" },
+  { en: "meat", pt: "carne" },
+  { en: "chicken", pt: "frango" },
+  { en: "egg", pt: "ovo" },
+  { en: "milk", pt: "leite" },
+  { en: "tea", pt: "chá" },
+  { en: "coffee", pt: "café" },
+  { en: "beer", pt: "cerveja" },
+  { en: "wine", pt: "vinho" },
+  { en: "money", pt: "dinheiro" },
+  { en: "book", pt: "livro" },
+  { en: "phone", pt: "telefone" },
+  { en: "computer", pt: "computador" },
+  { en: "table", pt: "mesa" },
+  { en: "chair", pt: "cadeira" },
+  { en: "bed", pt: "cama" },
+  { en: "time", pt: "tempo" },
+  { en: "day", pt: "dia" },
+  { en: "night", pt: "noite" },
+  { en: "week", pt: "semana" },
+  { en: "month", pt: "mês" },
+  { en: "year", pt: "ano" },
+  { en: "today", pt: "hoje" },
+  { en: "tomorrow", pt: "amanhã" },
+  { en: "yesterday", pt: "ontem" },
+  { en: "morning", pt: "manhã" },
+  { en: "afternoon", pt: "tarde" },
+  { en: "evening", pt: "tarde" },
+  { en: "love", pt: "amor" },
+  { en: "life", pt: "vida" },
+  { en: "death", pt: "morte" },
+  { en: "war", pt: "guerra" },
+  { en: "peace", pt: "paz" },
+  { en: "god", pt: "deus" },
+  { en: "good", pt: "bom" },
+  { en: "bad", pt: "mau" },
+  { en: "big", pt: "grande" },
+  { en: "small", pt: "pequeno" },
+  { en: "new", pt: "novo" },
+  { en: "old", pt: "velho" },
+  { en: "hot", pt: "quente" },
+  { en: "cold", pt: "frio" },
+  { en: "fast", pt: "rápido" },
+  { en: "slow", pt: "lento" },
+  { en: "happy", pt: "feliz" },
+  { en: "sad", pt: "triste" },
+  { en: "angry", pt: "bravo" },
+  { en: "tired", pt: "cansado" },
+  { en: "sick", pt: "doente" },
+  { en: "beautiful", pt: "belo" },
+  { en: "ugly", pt: "feio" },
+  { en: "rich", pt: "rico" },
+  { en: "poor", pt: "pobre" },
+  { en: "strong", pt: "forte" },
+  { en: "weak", pt: "fraco" },
+  { en: "young", pt: "jovem" },
+  { en: "easy", pt: "fácil" },
+  { en: "hard", pt: "difícil" },
+  { en: "right", pt: "certo" },
+  { en: "wrong", pt: "errado" },
+  { en: "true", pt: "verdadeiro" },
+  { en: "false", pt: "falso" },
+  { en: "same", pt: "mesmo" },
+  { en: "different", pt: "diferente" },
+  { en: "many", pt: "muitos" },
+  { en: "much", pt: "muito" },
+  { en: "more", pt: "mais" },
+  { en: "most", pt: "a maioria" },
+  { en: "little", pt: "pouco" },
+  { en: "few", pt: "poucos" },
+  { en: "less", pt: "menos" },
+  { en: "all", pt: "tudo" },
+  { en: "some", pt: "alguns" },
+  { en: "no", pt: "nenhum" },
+  { en: "every", pt: "cada" },
+  { en: "very", pt: "muito" },
+  { en: "too", pt: "também" },
+  { en: "also", pt: "também" },
+  { en: "and", pt: "e" },
+  { en: "or", pt: "ou" },
+  { en: "but", pt: "mas" },
+  { en: "because", pt: "porque" },
+  { en: "so", pt: "então" },
+  { en: "if", pt: "se" },
+  { en: "then", pt: "então" },
+  { en: "now", pt: "agora" },
+  { en: "here", pt: "aqui" },
+  { en: "there", pt: "lá" },
+  { en: "not", pt: "não" },
+  { en: "only", pt: "só" },
+  { en: "just", pt: "só" },
+  { en: "still", pt: "ainda" },
+  { en: "again", pt: "de novo" },
+  { en: "always", pt: "sempre" },
+  { en: "never", pt: "nunca" },
+  { en: "sometimes", pt: "às vezes" },
+  { en: "maybe", pt: "talvez" },
+  { en: "perhaps", pt: "talvez" },
+  { en: "one", pt: "um" },
+  { en: "two", pt: "dois" },
+  { en: "three", pt: "três" },
+  { en: "four", pt: "quatro" },
+  { en: "five", pt: "cinco" },
+  { en: "six", pt: "seis" },
+  { en: "seven", pt: "sete" },
+  { en: "eight", pt: "oito" },
+  { en: "nine", pt: "nove" },
+  { en: "ten", pt: "dez" },
+  { en: "hundred", pt: "cem" },
+  { en: "thousand", pt: "mil" },
+  { en: "million", pt: "milhão" },
+  { en: "how are you", pt: "como vai" },
+  { en: "what is your name", pt: "qual é o seu nome" },
+  { en: "my name is", pt: "meu nome é" },
+  { en: "i don't know", pt: "não sei" },
+  { en: "i don't understand", pt: "não entendo" },
+  { en: "i love you", pt: "eu te amo" },
+  { en: "i like you", pt: "eu gosto de você" },
+  { en: "i miss you", pt: "sinto saudades" },
+  { en: "where is the bathroom", pt: "onde fica o banheiro" },
+  { en: "how much is it", pt: "quanto custa" },
+  { en: "i am hungry", pt: "estou com fome" },
+  { en: "i am thirsty", pt: "estou com sede" },
+  { en: "i am tired", pt: "estou cansado" },
+  { en: "see you later", pt: "até logo" },
+  { en: "what time is it", pt: "que horas são" },
+  // profanity
+  { en: "fuck", pt: "foder" },
+  { en: "fucking", pt: "fodido" },
+  { en: "shit", pt: "merda" },
+  { en: "bitch", pt: "puta" },
+  { en: "ass", pt: "cu" },
+  { en: "asshole", pt: "idiota" },
+  { en: "dick", pt: "pau" },
+  { en: "pussy", pt: "buceta" },
+  { en: "cock", pt: "pau" },
+  { en: "damn", pt: "maldito" },
+  { en: "hell", pt: "inferno" },
+  { en: "idiot", pt: "idiota" },
+  { en: "stupid", pt: "estúpido" },
+  { en: "crazy", pt: "louco" },
+  { en: "bastard", pt: "bastardo" },
+  { en: "motherfucker", pt: "filho da puta" },
+  { en: "bullshit", pt: "besteira" },
+  { en: "fuck you", pt: "vai se foder" },
+  { en: "go to hell", pt: "vai pro inferno" },
+  { en: "shut up", pt: "cala a boca" },
+];
+
+// ---------- EN <-> RU (Russian) ----------
+const DICT_EN_RU = [
+  { en: "hello", ru: "привет" },
+  { en: "hi", ru: "привет" },
+  { en: "good morning", ru: "доброе утро" },
+  { en: "good afternoon", ru: "добрый день" },
+  { en: "good evening", ru: "добрый вечер" },
+  { en: "good night", ru: "спокойной ночи" },
+  { en: "goodbye", ru: "до свидания" },
+  { en: "bye", ru: "пока" },
+  { en: "please", ru: "пожалуйста" },
+  { en: "thank you", ru: "спасибо" },
+  { en: "thanks", ru: "спасибо" },
+  { en: "you're welcome", ru: "пожалуйста" },
+  { en: "sorry", ru: "извини" },
+  { en: "excuse me", ru: "извините" },
+  { en: "yes", ru: "да" },
+  { en: "no", ru: "нет" },
+  { en: "okay", ru: "ладно" },
+  { en: "ok", ru: "ок" },
+  { en: "i", ru: "я" },
+  { en: "you", ru: "ты" },
+  { en: "he", ru: "он" },
+  { en: "she", ru: "она" },
+  { en: "it", ru: "оно" },
+  { en: "we", ru: "мы" },
+  { en: "they", ru: "они" },
+  { en: "me", ru: "меня" },
+  { en: "my", ru: "мой" },
+  { en: "your", ru: "твой" },
+  { en: "his", ru: "его" },
+  { en: "her", ru: "её" },
+  { en: "our", ru: "наш" },
+  { en: "their", ru: "их" },
+  { en: "this", ru: "это" },
+  { en: "that", ru: "то" },
+  { en: "what", ru: "что" },
+  { en: "where", ru: "где" },
+  { en: "when", ru: "когда" },
+  { en: "why", ru: "почему" },
+  { en: "who", ru: "кто" },
+  { en: "how", ru: "как" },
+  { en: "how much", ru: "сколько" },
+  { en: "how many", ru: "сколько" },
+  { en: "which", ru: "какой" },
+  { en: "is", ru: "есть" },
+  { en: "are", ru: "есть" },
+  { en: "am", ru: "есть" },
+  { en: "was", ru: "был" },
+  { en: "were", ru: "были" },
+  { en: "be", ru: "быть" },
+  { en: "have", ru: "иметь" },
+  { en: "has", ru: "имеет" },
+  { en: "had", ru: "имел" },
+  { en: "do", ru: "делать" },
+  { en: "does", ru: "делает" },
+  { en: "did", ru: "делал" },
+  { en: "go", ru: "идти" },
+  { en: "goes", ru: "идёт" },
+  { en: "went", ru: "пошёл" },
+  { en: "come", ru: "приходить" },
+  { en: "comes", ru: "приходит" },
+  { en: "came", ru: "пришёл" },
+  { en: "see", ru: "видеть" },
+  { en: "saw", ru: "видел" },
+  { en: "look", ru: "смотреть" },
+  { en: "hear", ru: "слышать" },
+  { en: "listen", ru: "слушать" },
+  { en: "say", ru: "сказать" },
+  { en: "said", ru: "сказал" },
+  { en: "speak", ru: "говорить" },
+  { en: "talk", ru: "разговаривать" },
+  { en: "know", ru: "знать" },
+  { en: "knew", ru: "знал" },
+  { en: "think", ru: "думать" },
+  { en: "thought", ru: "думал" },
+  { en: "want", ru: "хотеть" },
+  { en: "wanted", ru: "хотел" },
+  { en: "need", ru: "нужно" },
+  { en: "like", ru: "нравиться" },
+  { en: "liked", ru: "нравилось" },
+  { en: "love", ru: "любить" },
+  { en: "loved", ru: "любил" },
+  { en: "hate", ru: "ненавидеть" },
+  { en: "eat", ru: "есть" },
+  { en: "ate", ru: "ел" },
+  { en: "drink", ru: "пить" },
+  { en: "drank", ru: "пил" },
+  { en: "sleep", ru: "спать" },
+  { en: "slept", ru: "спал" },
+  { en: "work", ru: "работать" },
+  { en: "worked", ru: "работал" },
+  { en: "play", ru: "играть" },
+  { en: "played", ru: "играл" },
+  { en: "buy", ru: "купить" },
+  { en: "bought", ru: "купил" },
+  { en: "sell", ru: "продавать" },
+  { en: "give", ru: "дать" },
+  { en: "gave", ru: "дал" },
+  { en: "take", ru: "взять" },
+  { en: "took", ru: "взял" },
+  { en: "get", ru: "получить" },
+  { en: "got", ru: "получил" },
+  { en: "make", ru: "делать" },
+  { en: "made", ru: "сделал" },
+  { en: "use", ru: "использовать" },
+  { en: "used", ru: "использовал" },
+  { en: "help", ru: "помочь" },
+  { en: "helped", ru: "помог" },
+  { en: "call", ru: "звонить" },
+  { en: "called", ru: "позвонил" },
+  { en: "try", ru: "попробовать" },
+  { en: "tried", ru: "пробовал" },
+  { en: "ask", ru: "спросить" },
+  { en: "asked", ru: "спросил" },
+  { en: "answer", ru: "ответить" },
+  { en: "answered", ru: "ответил" },
+  { en: "find", ru: "найти" },
+  { en: "found", ru: "нашёл" },
+  { en: "lose", ru: "потерять" },
+  { en: "lost", ru: "потерял" },
+  { en: "open", ru: "открыть" },
+  { en: "close", ru: "закрыть" },
+  { en: "start", ru: "начать" },
+  { en: "stop", ru: "остановить" },
+  { en: "begin", ru: "начать" },
+  { en: "end", ru: "конец" },
+  { en: "finish", ru: "закончить" },
+  { en: "live", ru: "жить" },
+  { en: "lived", ru: "жил" },
+  { en: "die", ru: "умереть" },
+  { en: "died", ru: "умер" },
+  { en: "kill", ru: "убить" },
+  { en: "killed", ru: "убил" },
+  { en: "run", ru: "бежать" },
+  { en: "ran", ru: "бежал" },
+  { en: "walk", ru: "идти" },
+  { en: "walked", ru: "шёл" },
+  { en: "drive", ru: "ехать" },
+  { en: "drove", ru: "ехал" },
+  { en: "fly", ru: "летать" },
+  { en: "flew", ru: "летел" },
+  { en: "read", ru: "читать" },
+  { en: "write", ru: "писать" },
+  { en: "wrote", ru: "написал" },
+  { en: "learn", ru: "учить" },
+  { en: "teach", ru: "учить" },
+  { en: "understand", ru: "понимать" },
+  { en: "understood", ru: "понял" },
+  { en: "remember", ru: "помнить" },
+  { en: "forget", ru: "забыть" },
+  { en: "believe", ru: "верить" },
+  { en: "feel", ru: "чувствовать" },
+  { en: "felt", ru: "чувствовал" },
+  { en: "man", ru: "мужчина" },
+  { en: "woman", ru: "женщина" },
+  { en: "boy", ru: "мальчик" },
+  { en: "girl", ru: "девочка" },
+  { en: "child", ru: "ребёнок" },
+  { en: "children", ru: "дети" },
+  { en: "baby", ru: "младенец" },
+  { en: "father", ru: "отец" },
+  { en: "mother", ru: "мать" },
+  { en: "dad", ru: "папа" },
+  { en: "mom", ru: "мама" },
+  { en: "son", ru: "сын" },
+  { en: "daughter", ru: "дочь" },
+  { en: "brother", ru: "брат" },
+  { en: "sister", ru: "сестра" },
+  { en: "friend", ru: "друг" },
+  { en: "friends", ru: "друзья" },
+  { en: "family", ru: "семья" },
+  { en: "people", ru: "люди" },
+  { en: "person", ru: "человек" },
+  { en: "name", ru: "имя" },
+  { en: "house", ru: "дом" },
+  { en: "home", ru: "дом" },
+  { en: "room", ru: "комната" },
+  { en: "door", ru: "дверь" },
+  { en: "window", ru: "окно" },
+  { en: "school", ru: "школа" },
+  { en: "work", ru: "работа" },
+  { en: "job", ru: "работа" },
+  { en: "car", ru: "машина" },
+  { en: "bus", ru: "автобус" },
+  { en: "train", ru: "поезд" },
+  { en: "plane", ru: "самолёт" },
+  { en: "boat", ru: "лодка" },
+  { en: "road", ru: "дорога" },
+  { en: "street", ru: "улица" },
+  { en: "city", ru: "город" },
+  { en: "country", ru: "страна" },
+  { en: "world", ru: "мир" },
+  { en: "water", ru: "вода" },
+  { en: "fire", ru: "огонь" },
+  { en: "air", ru: "воздух" },
+  { en: "earth", ru: "земля" },
+  { en: "sun", ru: "солнце" },
+  { en: "moon", ru: "луна" },
+  { en: "star", ru: "звезда" },
+  { en: "sky", ru: "небо" },
+  { en: "rain", ru: "дождь" },
+  { en: "snow", ru: "снег" },
+  { en: "wind", ru: "ветер" },
+  { en: "tree", ru: "дерево" },
+  { en: "flower", ru: "цветок" },
+  { en: "animal", ru: "животное" },
+  { en: "dog", ru: "собака" },
+  { en: "cat", ru: "кошка" },
+  { en: "fish", ru: "рыба" },
+  { en: "bird", ru: "птица" },
+  { en: "horse", ru: "лошадь" },
+  { en: "food", ru: "еда" },
+  { en: "rice", ru: "рис" },
+  { en: "bread", ru: "хлеб" },
+  { en: "meat", ru: "мясо" },
+  { en: "chicken", ru: "курица" },
+  { en: "egg", ru: "яйцо" },
+  { en: "milk", ru: "молоко" },
+  { en: "tea", ru: "чай" },
+  { en: "coffee", ru: "кофе" },
+  { en: "beer", ru: "пиво" },
+  { en: "wine", ru: "вино" },
+  { en: "money", ru: "деньги" },
+  { en: "book", ru: "книга" },
+  { en: "phone", ru: "телефон" },
+  { en: "computer", ru: "компьютер" },
+  { en: "table", ru: "стол" },
+  { en: "chair", ru: "стул" },
+  { en: "bed", ru: "кровать" },
+  { en: "time", ru: "время" },
+  { en: "day", ru: "день" },
+  { en: "night", ru: "ночь" },
+  { en: "week", ru: "неделя" },
+  { en: "month", ru: "месяц" },
+  { en: "year", ru: "год" },
+  { en: "today", ru: "сегодня" },
+  { en: "tomorrow", ru: "завтра" },
+  { en: "yesterday", ru: "вчера" },
+  { en: "morning", ru: "утро" },
+  { en: "afternoon", ru: "день" },
+  { en: "evening", ru: "вечер" },
+  { en: "love", ru: "любовь" },
+  { en: "life", ru: "жизнь" },
+  { en: "death", ru: "смерть" },
+  { en: "war", ru: "война" },
+  { en: "peace", ru: "мир" },
+  { en: "god", ru: "бог" },
+  { en: "good", ru: "хороший" },
+  { en: "bad", ru: "плохой" },
+  { en: "big", ru: "большой" },
+  { en: "small", ru: "маленький" },
+  { en: "new", ru: "новый" },
+  { en: "old", ru: "старый" },
+  { en: "hot", ru: "горячий" },
+  { en: "cold", ru: "холодный" },
+  { en: "fast", ru: "быстрый" },
+  { en: "slow", ru: "медленный" },
+  { en: "happy", ru: "счастливый" },
+  { en: "sad", ru: "грустный" },
+  { en: "angry", ru: "злой" },
+  { en: "tired", ru: "усталый" },
+  { en: "sick", ru: "больной" },
+  { en: "beautiful", ru: "красивый" },
+  { en: "ugly", ru: "уродливый" },
+  { en: "rich", ru: "богатый" },
+  { en: "poor", ru: "бедный" },
+  { en: "strong", ru: "сильный" },
+  { en: "weak", ru: "слабый" },
+  { en: "young", ru: "молодой" },
+  { en: "easy", ru: "лёгкий" },
+  { en: "hard", ru: "трудный" },
+  { en: "right", ru: "правильный" },
+  { en: "wrong", ru: "неправильный" },
+  { en: "true", ru: "правда" },
+  { en: "false", ru: "ложь" },
+  { en: "same", ru: "тот же" },
+  { en: "different", ru: "разный" },
+  { en: "many", ru: "много" },
+  { en: "much", ru: "много" },
+  { en: "more", ru: "больше" },
+  { en: "most", ru: "большинство" },
+  { en: "little", ru: "мало" },
+  { en: "few", ru: "немного" },
+  { en: "less", ru: "меньше" },
+  { en: "all", ru: "всё" },
+  { en: "some", ru: "несколько" },
+  { en: "no", ru: "нет" },
+  { en: "every", ru: "каждый" },
+  { en: "very", ru: "очень" },
+  { en: "too", ru: "тоже" },
+  { en: "also", ru: "также" },
+  { en: "and", ru: "и" },
+  { en: "or", ru: "или" },
+  { en: "but", ru: "но" },
+  { en: "because", ru: "потому что" },
+  { en: "so", ru: "поэтому" },
+  { en: "if", ru: "если" },
+  { en: "then", ru: "тогда" },
+  { en: "now", ru: "сейчас" },
+  { en: "here", ru: "здесь" },
+  { en: "there", ru: "там" },
+  { en: "not", ru: "не" },
+  { en: "only", ru: "только" },
+  { en: "just", ru: "просто" },
+  { en: "still", ru: "ещё" },
+  { en: "again", ru: "снова" },
+  { en: "always", ru: "всегда" },
+  { en: "never", ru: "никогда" },
+  { en: "sometimes", ru: "иногда" },
+  { en: "maybe", ru: "может быть" },
+  { en: "perhaps", ru: "возможно" },
+  { en: "one", ru: "один" },
+  { en: "two", ru: "два" },
+  { en: "three", ru: "три" },
+  { en: "four", ru: "четыре" },
+  { en: "five", ru: "пять" },
+  { en: "six", ru: "шесть" },
+  { en: "seven", ru: "семь" },
+  { en: "eight", ru: "восемь" },
+  { en: "nine", ru: "девять" },
+  { en: "ten", ru: "десять" },
+  { en: "hundred", ru: "сто" },
+  { en: "thousand", ru: "тысяча" },
+  { en: "million", ru: "миллион" },
+  { en: "how are you", ru: "как дела" },
+  { en: "what is your name", ru: "как тебя зовут" },
+  { en: "my name is", ru: "меня зовут" },
+  { en: "i don't know", ru: "я не знаю" },
+  { en: "i don't understand", ru: "я не понимаю" },
+  { en: "i love you", ru: "я тебя люблю" },
+  { en: "i like you", ru: "ты мне нравишься" },
+  { en: "i miss you", ru: "я скучаю по тебе" },
+  { en: "where is the bathroom", ru: "где туалет" },
+  { en: "how much is it", ru: "сколько стоит" },
+  { en: "i am hungry", ru: "я голоден" },
+  { en: "i am thirsty", ru: "я хочу пить" },
+  { en: "i am tired", ru: "я устал" },
+  { en: "see you later", ru: "до встречи" },
+  { en: "what time is it", ru: "который час" },
+  // profanity
+  { en: "fuck", ru: "блядь" },
+  { en: "fucking", ru: "ёбаный" },
+  { en: "shit", ru: "дерьмо" },
+  { en: "bitch", ru: "сука" },
+  { en: "ass", ru: "задница" },
+  { en: "asshole", ru: "мудак" },
+  { en: "dick", ru: "хуй" },
+  { en: "pussy", ru: "пизда" },
+  { en: "cock", ru: "хуй" },
+  { en: "damn", ru: "чёрт" },
+  { en: "hell", ru: "ад" },
+  { en: "idiot", ru: "идиот" },
+  { en: "stupid", ru: "глупый" },
+  { en: "crazy", ru: "сумасшедший" },
+  { en: "bastard", ru: "ублюдок" },
+  { en: "motherfucker", ru: "мудак" },
+  { en: "bullshit", ru: "хрень" },
+  { en: "fuck you", ru: "пошёл на хуй" },
+  { en: "go to hell", ru: "иди к чёрту" },
+  { en: "shut up", ru: "заткнись" },
+];
+
+// ---------- EN <-> UR (Urdu) ----------
+const DICT_EN_UR = [
+  { en: "hello", ur: "ہیلو" },
+  { en: "hi", ur: "ہیلو" },
+  { en: "good morning", ur: "صبح بخیر" },
+  { en: "good evening", ur: "شام بخیر" },
+  { en: "good night", ur: "شب بخیر" },
+  { en: "goodbye", ur: "الوداع" },
+  { en: "bye", ur: "خدا حافظ" },
+  { en: "please", ur: "براہ کرم" },
+  { en: "thank you", ur: "شکریہ" },
+  { en: "thanks", ur: "شکریہ" },
+  { en: "you're welcome", ur: "خیر مقدم" },
+  { en: "sorry", ur: "معاف کیجیے" },
+  { en: "yes", ur: "ہاں" },
+  { en: "no", ur: "نہیں" },
+  { en: "okay", ur: "ٹھیک ہے" },
+  { en: "ok", ur: "ٹھیک ہے" },
+  { en: "i", ur: "میں" },
+  { en: "you", ur: "تم" },
+  { en: "he", ur: "وہ" },
+  { en: "she", ur: "وہ" },
+  { en: "we", ur: "ہم" },
+  { en: "they", ur: "وہ" },
+  { en: "my", ur: "میرا" },
+  { en: "your", ur: "تمہارا" },
+  { en: "what", ur: "کیا" },
+  { en: "where", ur: "کہاں" },
+  { en: "when", ur: "کب" },
+  { en: "why", ur: "کیوں" },
+  { en: "who", ur: "کون" },
+  { en: "how", ur: "کیسے" },
+  { en: "how much", ur: "کتنا" },
+  { en: "is", ur: "ہے" },
+  { en: "are", ur: "ہیں" },
+  { en: "am", ur: "ہوں" },
+  { en: "have", ur: "ہے" },
+  { en: "has", ur: "ہے" },
+  { en: "do", ur: "کرو" },
+  { en: "go", ur: "جاؤ" },
+  { en: "come", ur: "آؤ" },
+  { en: "see", ur: "دیکھو" },
+  { en: "look", ur: "دیکھو" },
+  { en: "say", ur: "کہو" },
+  { en: "speak", ur: "بولو" },
+  { en: "know", ur: "جانو" },
+  { en: "think", ur: "سوچو" },
+  { en: "want", ur: "چاہو" },
+  { en: "need", ur: "ضرورت" },
+  { en: "like", ur: "پسند" },
+  { en: "love", ur: "محبت" },
+  { en: "eat", ur: "کھاؤ" },
+  { en: "drink", ur: "پیو" },
+  { en: "sleep", ur: "سوو" },
+  { en: "work", ur: "کام" },
+  { en: "play", ur: "کھیلو" },
+  { en: "buy", ur: "خریدو" },
+  { en: "give", ur: "دو" },
+  { en: "take", ur: "لو" },
+  { en: "make", ur: "بناؤ" },
+  { en: "help", ur: "مدد" },
+  { en: "ask", ur: "پوچھو" },
+  { en: "answer", ur: "جواب" },
+  { en: "find", ur: "ڈھونڈو" },
+  { en: "open", ur: "کھولو" },
+  { en: "close", ur: "بند کرو" },
+  { en: "man", ur: "آدمی" },
+  { en: "woman", ur: "عورت" },
+  { en: "boy", ur: "لڑکا" },
+  { en: "girl", ur: "لڑکی" },
+  { en: "child", ur: "بچہ" },
+  { en: "father", ur: "باپ" },
+  { en: "mother", ur: "ماں" },
+  { en: "son", ur: "بیٹا" },
+  { en: "daughter", ur: "بیٹی" },
+  { en: "friend", ur: "دوست" },
+  { en: "family", ur: "خاندان" },
+  { en: "name", ur: "نام" },
+  { en: "house", ur: "گھر" },
+  { en: "home", ur: "گھر" },
+  { en: "water", ur: "پانی" },
+  { en: "fire", ur: "آگ" },
+  { en: "sun", ur: "سورج" },
+  { en: "moon", ur: "چاند" },
+  { en: "sky", ur: "آسمان" },
+  { en: "rain", ur: "بارش" },
+  { en: "food", ur: "کھانا" },
+  { en: "bread", ur: "روٹی" },
+  { en: "milk", ur: "دودھ" },
+  { en: "tea", ur: "چائے" },
+  { en: "money", ur: "پیسہ" },
+  { en: "book", ur: "کتاب" },
+  { en: "car", ur: "گاڑی" },
+  { en: "time", ur: "وقت" },
+  { en: "day", ur: "دن" },
+  { en: "night", ur: "رات" },
+  { en: "year", ur: "سال" },
+  { en: "today", ur: "آج" },
+  { en: "tomorrow", ur: "کل" },
+  { en: "yesterday", ur: "کل" },
+  { en: "good", ur: "اچھا" },
+  { en: "bad", ur: "برا" },
+  { en: "big", ur: "بڑا" },
+  { en: "small", ur: "چھوٹا" },
+  { en: "new", ur: "نیا" },
+  { en: "old", ur: "پرانا" },
+  { en: "hot", ur: "گرم" },
+  { en: "cold", ur: "ٹھنڈا" },
+  { en: "fast", ur: "تیز" },
+  { en: "happy", ur: "خوش" },
+  { en: "sad", ur: "اداس" },
+  { en: "angry", ur: "غصہ" },
+  { en: "tired", ur: "تھکا" },
+  { en: "beautiful", ur: "خوبصورت" },
+  { en: "rich", ur: "امیر" },
+  { en: "poor", ur: "غریب" },
+  { en: "easy", ur: "آسان" },
+  { en: "hard", ur: "مشکل" },
+  { en: "right", ur: "صحیح" },
+  { en: "wrong", ur: "غلط" },
+  { en: "true", ur: "سچ" },
+  { en: "false", ur: "جھوٹ" },
+  { en: "very", ur: "بہت" },
+  { en: "and", ur: "اور" },
+  { en: "or", ur: "یا" },
+  { en: "but", ur: "لیکن" },
+  { en: "because", ur: "کیونکہ" },
+  { en: "so", ur: "تو" },
+  { en: "if", ur: "اگر" },
+  { en: "now", ur: "اب" },
+  { en: "here", ur: "یہاں" },
+  { en: "there", ur: "وہاں" },
+  { en: "not", ur: "نہیں" },
+  { en: "only", ur: "صرف" },
+  { en: "always", ur: "ہمیشہ" },
+  { en: "never", ur: "کبھی نہیں" },
+  { en: "maybe", ur: "شاید" },
+  { en: "one", ur: "ایک" },
+  { en: "two", ur: "دو" },
+  { en: "three", ur: "تین" },
+  { en: "four", ur: "چار" },
+  { en: "five", ur: "پانچ" },
+  { en: "six", ur: "چھ" },
+  { en: "seven", ur: "سات" },
+  { en: "eight", ur: "آٹھ" },
+  { en: "nine", ur: "نو" },
+  { en: "ten", ur: "دس" },
+  { en: "how are you", ur: "آپ کیسے ہیں" },
+  { en: "what is your name", ur: "آپ کا نام کیا ہے" },
+  { en: "my name is", ur: "میرا نام ہے" },
+  { en: "i don't know", ur: "مجھے نہیں پتہ" },
+  { en: "i love you", ur: "میں تم سے محبت کرتا ہوں" },
+  { en: "i am hungry", ur: "مجھے بھوک لگی ہے" },
+  { en: "see you later", ur: "بعد میں ملتے ہیں" },
+  // profanity
+  { en: "fuck", ur: "چود" },
+  { en: "shit", ur: "بکواس" },
+  { en: "bitch", ur: "رنڈی" },
+  { en: "asshole", ur: "گندو" },
+  { en: "damn", ur: "لعنت" },
+  { en: "idiot", ur: "بیوقوف" },
+  { en: "stupid", ur: "بیوقوف" },
+  { en: "crazy", ur: "پاگل" },
+  { en: "bastard", ur: "حرامی" },
+  { en: "bullshit", ur: "بکواس" },
+  { en: "fuck you", ur: "چود تمہیں" },
+  { en: "shut up", ur: "چپ رہو" },
+];
+
+;
+// =============================================================
+//  UNCENSORED TRANSLATOR — ENGINE
+//  Pivot-through-English word/phrase substitution.
+//  No network. No model. Pure JS dictionary pass-through.
+// =============================================================
+
+const LANGS = ["en", "zh", "hi", "es", "fr", "ar", "bn", "pt", "ru", "ur"];
+
+// Raw dictionary arrays (from dict_part1.js + dict_part2.js)
+const ALL_DICTS = [].concat(
+  DICT_EN_ZH, DICT_EN_HI, DICT_EN_ES, DICT_EN_FR,
+  DICT_EN_AR, DICT_EN_BN, DICT_EN_PT, DICT_EN_RU, DICT_EN_UR
+);
+
+// Build two-way lookup.
+// fwd[xx][enWord] = xxWord   (English -> other language)
+// rev[xx][xxWord] = enWord   (other language -> English)
+const fwd = {};
+const rev = {};
+LANGS.forEach(l => { if (l !== "en") { fwd[l] = {}; rev[l] = {}; } });
+
+ALL_DICTS.forEach(entry => {
+  const otherLang = LANGS.find(l => l !== "en" && entry[l] !== undefined);
+  if (!otherLang) return;
+  const en = entry.en.toLowerCase();
+  const xx = entry[otherLang];
+  if (!fwd[otherLang][en]) fwd[otherLang][en] = xx;
+  if (!rev[otherLang][xx]) rev[otherLang][xx] = en;
+});
+
+// en->en identity for when source or target is en
+// (handled by returning text unchanged in translate())
+
+// Sort keys by word-count desc then length desc so longest phrases match first.
+function sortedKeys(obj) {
+  return Object.keys(obj).sort((a, b) => {
+    const ac = a.split(/\s+/).length, bc = b.split(/\s+/).length;
+    if (bc !== ac) return bc - ac;
+    return b.length - a.length;
+  });
+}
+
+// Tokenize: keep words and the whitespace/punctuation between them.
+// Returns array of { text, isWord }
+function tokenize(text) {
+  const tokens = [];
+  // regex: word chars include unicode letters, numbers, AND combining marks
+  // (\p{M}) so that scripts like Devanagari / Bengali keep their virama +
+  // vowel-sign clusters glued to the base letter instead of splitting.
+  const wordRe = /[\p{L}\p{N}\p{M}]+(?:[''\-][\p{L}\p{N}\p{M}]+)*/gu;
+  let last = 0;
+  let match;
+  while ((match = wordRe.exec(text)) !== null) {
+    if (match.index > last) {
+      tokens.push({ text: text.slice(last, match.index), isWord: false });
+    }
+    tokens.push({ text: match[0], isWord: true });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    tokens.push({ text: text.slice(last), isWord: false });
+  }
+  return tokens;
+}
+
+// Translate a word-or-phrase using a lookup table (src->tgt single step)
+function lookupWord(table, wordLower) {
+  if (!table) return null;
+  if (Object.prototype.hasOwnProperty.call(table, wordLower)) {
+    return table[wordLower];
+  }
+  return null;
+}
+
+// Direct single-step translation using one table (src->tgt where at least one is en).
+// tokens are already split; returns output string.
+function translateDirect(text, table) {
+  if (!table) return text; // identity (en->en)
+  const srcKeys = sortedKeys(table);
+  const tokens = tokenize(text);
+  const out = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const tk = tokens[i];
+    if (!tk.isWord) { out.push(tk.text); i++; continue; }
+    // longest-phrase match
+    let matched = null, matchedLen = 0;
+    const phraseWords = [];
+    let j = i;
+    while (j < tokens.length && phraseWords.length < 6) {
+      if (!tokens[j].isWord) { j++; continue; }
+      phraseWords.push(tokens[j].text);
+      j++;
+      const candidate = phraseWords.join(" ").toLowerCase();
+      const res = lookupWord(table, candidate);
+      if (res !== null) { matched = res; matchedLen = phraseWords.length; }
+    }
+    if (matched !== null && matchedLen > 0) {
+      // consume matchedLen word tokens + any non-word tokens between them
+      let consumed = 0, idx = i;
+      while (consumed < matchedLen) {
+        if (tokens[idx].isWord) consumed++;
+        idx++;
+      }
+      out.push(matched);
+      i = idx;
+    } else {
+      const w = tk.text;
+      const res = lookupWord(table, w.toLowerCase());
+      out.push(res !== null ? res : w);
+      i++;
+    }
+  }
+  return out.join("");
+}
+
+// Translate the full text from src to tgt.
+function translate(text, src, tgt) {
+  if (!text) return "";
+  if (src === tgt) return text;
+
+  // Single step when either side is English.
+  if (src === "en") return translateDirect(text, fwd[tgt]);
+  if (tgt === "en") return translateDirect(text, rev[src]);
+
+  // Two-step pivot: src -> en -> tgt. Both legs use full phrase matching.
+  const enIntermediate = translateDirect(text, rev[src]);
+  return translateDirect(enIntermediate, fwd[tgt]);
+}
+
+// expose
+window.TRANSLATOR = { translate, LANGS };
+
+;
+// UI logic for the Uncensored Translator
+
+(function () {
+  const LANG_META = [
+    { code: "en", name: "English",   tag: "english"   },
+    { code: "zh", name: "Mandarin",  tag: "mandarin"   },
+    { code: "hi", name: "Hindi",     tag: "hindi"      },
+    { code: "es", name: "Spanish",   tag: "spanish"    },
+    { code: "fr", name: "French",    tag: "french"     },
+    { code: "ar", name: "Arabic",    tag: "arabic"     },
+    { code: "bn", name: "Bengali",   tag: "bengali"    },
+    { code: "pt", name: "Portuguese",tag: "portuguese" },
+    { code: "ru", name: "Russian",   tag: "russian"    },
+    { code: "ur", name: "Urdu",      tag: "urdu"       },
+  ];
+  const byCode = {};
+  LANG_META.forEach(m => byCode[m.code] = m);
+
+  const $ = id => document.getElementById(id);
+  const srcSel = $("srcLang"), tgtSel = $("tgtLang");
+  const srcText = $("srcText"), outText = $("outText");
+  const swapBtn = $("swapBtn"), txBtn = $("txBtn"), clearBtn = $("clearBtn");
+  const autoToggle = $("autoToggle");
+  const countEl = $("count"), wire = $("wire"), bars = $("bars");
+  const srcTag = $("srcTag"), tgtTag = $("tgtTag");
+
+  const MAX = 2000;
+
+  // populate selectors
+  LANG_META.forEach(m => {
+    const o1 = new Option(m.name, m.code);
+    const o2 = new Option(m.name, m.code);
+    srcSel.add(o1); tgtSel.add(o2);
+  });
+  srcSel.value = "en";
+  tgtSel.value = "es";
+
+  function updateTags() {
+    srcTag.textContent = byCode[srcSel.value].tag;
+    tgtTag.textContent = byCode[tgtSel.value].tag;
+  }
+
+  function updateCount() {
+    const n = srcText.value.length;
+    const b = countEl.querySelector("b");
+    b.textContent = n;
+    countEl.classList.toggle("warn", n > MAX * 0.8 && n <= MAX);
+    countEl.classList.toggle("danger", n >= MAX);
+  }
+
+  function flashBars() {
+    bars.classList.add("tx");
+    setTimeout(() => bars.classList.remove("tx"), 600);
+  }
+
+  function transmit() {
+    const txt = srcText.value;
+    const src = srcSel.value, tgt = tgtSel.value;
+    wire.classList.remove("transmitting");
+    void wire.offsetWidth; // restart anim
+    wire.classList.add("transmitting");
+    flashBars();
+    const result = window.TRANSLATOR.translate(txt, src, tgt);
+    if (result && result.trim()) {
+      outText.classList.remove("empty");
+      outText.innerHTML = escapeHtml(result) + '<span class="cursor"></span>';
+    } else {
+      outText.classList.add("empty");
+      outText.innerHTML = '<span class="cursor"></span>';
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // debounced auto-translate
+  let timer = null;
+  function scheduleAuto() {
+    if (!autoToggle.checked) return;
+    clearTimeout(timer);
+    timer = setTimeout(transmit, 420);
+  }
+
+  // events
+  srcText.addEventListener("input", () => { updateCount(); scheduleAuto(); });
+  srcSel.addEventListener("change", () => { updateTags(); scheduleAuto(); });
+  tgtSel.addEventListener("change", () => { updateTags(); scheduleAuto(); });
+  autoToggle.addEventListener("change", scheduleAuto);
+  txBtn.addEventListener("click", transmit);
+  clearBtn.addEventListener("click", () => {
+    srcText.value = "";
+    outText.classList.add("empty");
+    outText.innerHTML = '<span class="cursor"></span>';
+    updateCount();
+    srcText.focus();
+  });
+  swapBtn.addEventListener("click", () => {
+    const a = srcSel.value;
+    srcSel.value = tgtSel.value;
+    tgtSel.value = a;
+    // also move current output into the source box if present
+    const cur = outText.classList.contains("empty") ? "" : outText.textContent.replace(/\u200b/g,"").trim();
+    if (cur) { srcText.value = cur; }
+    updateTags();
+    updateCount();
+    transmit();
+  });
+
+  // ctrl/cmd+enter = transmit
+  srcText.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); transmit(); }
+  });
+
+  // init
+  updateTags();
+  updateCount();
+  srcText.focus();
+})();
+
+</script>
+</body>
+</html>

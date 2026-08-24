@@ -1,0 +1,6 @@
+385:  { en: "hello", hi: "नमस्ते" },
+386:  { en: "hi", hi: "नमस्ते" },
+=== hex of test input vs file ===
+found namaste in file at: 11135
+chars: 928 92e 938 94d 924 947 22
+test chars: 928 92e 938 94d 924 947

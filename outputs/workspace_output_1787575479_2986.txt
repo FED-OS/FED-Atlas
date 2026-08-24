@@ -1,0 +1,6 @@
+hindi namaste: [{"text":"नमस","isWord":true},{"text":"्","isWord":false},{"text":"त","isWord":true},{"text":"े","isWord":false}]
+bengali hello: [{"text":"হ","isWord":true},{"text":"্","isWord":false},{"text":"য","isWord":true},{"text":"া","isWord":false},{"text":"ল","isWord":true},{"text":"ো","isWord":false}]
+urdu hello: [{"text":"ہیلو","isWord":true}]
+arabic thanks: [{"text":"شكرا","isWord":true}]
+russian privet: [{"text":"привет","isWord":true}]
+zh nihao: [{"text":"你好","isWord":true}]
